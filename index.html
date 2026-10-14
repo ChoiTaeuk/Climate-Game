@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Green Café Boss</title>
+<style>
+  :root {
+    --bg: #f3faf0;
+    --card: #ffffff;
+    --text: #2d3a2e;
+    --muted: #6b7a6c;
+    --green: #3fa34d;
+    --green-dark: #2e7d3a;
+    --brown: #8d6e63;
+    --money: #f2b705;
+    --rep: #4a90e2;
+    --carbon: #7a7a7a;
+    --red: #d9534f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  h1 { font-size: 2rem; margin: 8px 0; text-align: center; }
+  h2 { font-size: 1.4rem; margin: 4px 0 12px; }
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .big-emoji { font-size: 4rem; text-align: center; margin: 4px 0; }
+  .center { text-align: center; }
+  .note { font-size: 0.9rem; color: var(--muted); text-align: center; margin-top: 12px; }
+
+  /* Stat bars */
+  .stats { display: grid; gap: 8px; margin-bottom: 16px; }
+  .stat { display: grid; grid-template-columns: 130px 1fr 44px; align-items: center; gap: 8px; }
+  .stat-label { font-weight: 600; }
+  .stat-num { text-align: right; font-weight: 700; }
+  .bar { height: 18px; background: #e3e8e3; border-radius: 9px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 9px; transition: width 0.5s ease; }
+  .fill.money { background: var(--money); }
+  .fill.rep { background: var(--rep); }
+  .fill.carbon { background: var(--carbon); }
+
+  .round-tag { color: var(--muted); font-weight: 600; font-size: 0.95rem; }
+
+  /* Buttons */
+  .options { display: grid; gap: 12px; }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 16px;
+    padding: 16px;
+    width: 100%;
+    font-size: 1.1rem;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  button:active { transform: scale(0.98); }
+  .option {
+    background: #fffaf0;
+    border: 3px solid #f0e2c4;
+    text-align: left;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+  .option:hover { border-color: var(--brown); }
+  .option .emo { font-size: 2.4rem; }
+  .option .name { font-weight: 700; display: block; }
+  .option .fx { font-size: 0.95rem; color: var(--muted); }
+  .primary {
+    background: var(--green);
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-top: 8px;
+  }
+  .primary:hover { background: var(--green-dark); }
+
+  .changes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
+  .chip {
+    background: #eef3ee;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-weight: 600;
+  }
+  .chip.good { background: #dcf3df; color: #22672c; }
+  .chip.bad { background: #fbe1e0; color: #9b2c28; }
+  .why {
+    background: #eef7ff;
+    border-left: 5px solid var(--rep);
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 12px;
+  }
+  .final { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+  .final div { background: #f4f6f4; border-radius: 12px; padding: 10px; text-align: center; font-weight: 700; }
+  .final span { display: block; font-size: 1.6rem; }
+
+  @media (max-width: 420px) {
+    h1 { font-size: 1.6rem; }
+    .stat { grid-template-columns: 110px 1fr 40px; font-size: 0.95rem; }
+    .option .emo { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="stats" class="stats" hidden></div>
+  <div id="screen"></div>
+</div>
+
+<script>
+  const START = { money: 50, rep: 50, carbon: 0 };
+
+  const ROUNDS = [
+    {
+      title: "Cups ☕",
+      question: "What cups will your café use?",
+      options: [
+        { emo: "🥤", name: "Plastic cups", money: -5, rep: -10, carbon: 10, green: false,
+          result: "You saved money, but some customers did not like all the trash.",
+          why: "Single-use plastic is made from oil and is used once, then becomes waste." },
+        { emo: "☕", name: "Reusable cups", money: -15, rep: 10, carbon: 2, green: true,
+          result: "Reusable cups cost more today, but customers love them!",
+          why: "A cup that is washed and used again and again makes much less waste than new cups every time." }
+      ]
+    },
+    {
+      title: "Coffee Beans 🫘",
+      question: "How will your coffee beans travel to your café?",
+      options: [
+        { emo: "✈️", name: "Air-shipped beans", money: -5, rep: 0, carbon: 15, green: false,
+          result: "The beans arrived fast and cheap for you.",
+          why: "Planes burn a lot of fuel, so flying goods creates more carbon than other ways to ship." },
+        { emo: "🚢", name: "Sea-shipped beans", money: -12, rep: 5, carbon: 5, green: true,
+          result: "The beans took longer and cost more, but your carbon stayed low.",
+          why: "Big ships carry huge loads at once, so each bag of beans makes less carbon than by plane." }
+      ]
+    },
+    {
+      title: "Straws 🥤",
+      question: "What about straws?",
+      options: [
+        { emo: "🧃", name: "Plastic straws", money: -2, rep: -10, carbon: 5, green: false,
+          result: "Cheap and easy, but some customers frowned at the plastic.",
+          why: "Plastic straws are small and hard to recycle, so many end up as litter." },
+        { emo: "🌱", name: "Paper straws or no straw", money: -4, rep: 5, carbon: 1, green: true,
+          result: "A small change that customers noticed and liked.",
+          why: "Small daily choices add up when many people make them every day." }
+      ]
+    },
+    {
+      title: "Electricity ⚡",
+      question: "Where will your café get its power?",
+      options: [
+        { emo: "🔌", name: "Regular power", money: -10, rep: 0, carbon: 20, green: false,
+          result: "The lights are on and the bill is low for now.",
+          why: "Much regular electricity comes from burning coal or gas, which releases carbon." },
+        { emo: "☀️", name: "Solar panels", money: -30, rep: 5, carbon: 2, green: true,
+          result: "Solar panels were a big cost, but now the sun powers your café!",
+          why: "Solar panels cost a lot at first, but sunlight is free and makes no smoke." }
+      ]
+    },
+    {
+      title: "Leftover Food 🥐",
+      question: "At closing time, you have leftover food. What do you do?",
+      options: [
+        { emo: "🗑️", name: "Throw it away", money: 0, rep: -5, carbon: 10, green: false,
+          result: "Quick and easy, but good food went into the trash.",
+          why: "Wasted food also wastes the energy and water used to make it, and it can release gas as it rots." },
+        { emo: "🏷️", name: "Sell at a discount", money: -5, rep: 10, carbon: 2, green: true,
+          result: "Students and neighbors loved the cheap snacks!",
+          why: "When food gets eaten instead of thrown away, nothing used to make it is wasted." }
+      ]
+    }
+  ];
+
+  let state, roundIndex, greenCount;
+
+  const $screen = document.getElementById("screen");
+  const $stats = document.getElementById("stats");
+
+  function income(rep) {
+    return Math.round(20 + rep / 5);
+  }
+
+  function renderStats() {
+    const bars = [
+      { label: "💰 Money", value: state.money, max: 200, cls: "money" },
+      { label: "⭐ Reputation", value: state.rep, max: 100, cls: "rep" },
+      { label: "🏭 Carbon", value: state.carbon, max: 100, cls: "carbon" }
+    ];
+    $stats.innerHTML = bars.map(b => {
+      const pct = Math.max(0, Math.min(100, (b.value / b.max) * 100));
+      return `<div class="stat">
+        <span class="stat-label">${b.label}</span>
+        <div class="bar"><div class="fill ${b.cls}" style="width:${pct}%"></div></div>
+        <span class="stat-num">${b.value}</span>
+      </div>`;
+    }).join("");
+    $stats.hidden = false;
+  }
+
+  function showStart() {
+    $stats.hidden = true;
+    $screen.innerHTML = `
+      <div class="card center">
+        <div class="big-emoji">☕🌱</div>
+        <h1>Green Café Boss</h1>
+        <p>You just opened a small café! 🎉</p>
+        <p>Make 5 business choices. Green choices often cost more today,
+           but they can build your reputation and cut carbon.</p>
+        <p>Can you keep your café alive <b>and</b> help the planet? 🌍</p>
+        <button class="primary" id="startBtn">Start Game ▶️</button>
+        <p class="note">Numbers in this game are simplified for learning.</p>
+      </div>`;
+    document.getElementById("startBtn").onclick = startGame;
+  }
+
+  function startGame() {
+    state = { ...START };
+    roundIndex = 0;
+    greenCount = 0;
+    showRound();
+  }
+
+  function fxText(o) {
+    const sign = n => (n > 0 ? "+" + n : String(n));
+    return `💰 ${sign(o.money)} · ⭐ ${sign(o.rep)} · 🏭 ${sign(o.carbon)}`;
+  }
+
+  function showRound() {
+    renderStats();
+    const r = ROUNDS[roundIndex];
+    $screen.innerHTML = `
+      <div class="card">
+        <div class="round-tag">Round ${roundIndex + 1} of ${ROUNDS.length}</div>
+        <h2>${r.title}</h2>
+        <p>${r.question}</p>
+        <div class="options">
+          ${r.options.map((o, i) => `
+            <button class="option" data-i="${i}">
+              <span class="emo">${o.emo}</span>
+              <span><span class="name">${o.name}</span><span class="fx">${fxText(o)}</span></span>
+            </button>`).join("")}
+        </div>
+      </div>`;
+    $screen.querySelectorAll(".option").forEach(btn => {
+      btn.onclick = () => choose(r.options[Number(btn.dataset.i)]);
+    });
+  }
+
+  function chip(label, n, goodIfPositive) {
+    const good = goodIfPositive ? n > 0 : n < 0;
+    const bad = goodIfPositive ? n < 0 : n > 0;
+    const cls = good ? "good" : bad ? "bad" : "";
+    return `<span class="chip ${cls}">${label} ${n > 0 ? "+" + n : n}</span>`;
+  }
+
+  function choose(o) {
+    if (o.green) greenCount++;
+    state.money += o.money;
+    state.rep = Math.max(0, Math.min(100, state.rep + o.rep));
+    state.carbon += o.carbon;
+
+    if (state.money < 0) {
+      renderStats();
+      showBankrupt(o);
+      return;
+    }
+
+    const earned = income(state.rep);
+    state.money += earned;
+    renderStats();
+
+    const last = roundIndex === ROUNDS.length - 1;
+    $screen.innerHTML = `
+      <div class="card">
+        <div class="big-emoji">${o.emo}</div>
+        <h2 class="center">You chose: ${o.name}</h2>
+        <p class="center">${o.result}</p>
+        <div class="changes">
+          ${chip("💰", o.money, true)}
+          ${chip("⭐", o.rep, true)}
+          ${chip("🏭", o.carbon, false)}
+        </div>
+        <p class="center">☕ Customers came in! You earned <b>💰 ${earned}</b> this round.</p>
+        <div class="why"><b>💡 Why it matters:</b> ${o.why}</div>
+        <button class="primary" id="nextBtn">${last ? "See Results 🏁" : "Next ➡️"}</button>
+      </div>`;
+    document.getElementById("nextBtn").onclick = () => {
+      roundIndex++;
+      if (roundIndex < ROUNDS.length) showRound();
+      else showEnding();
+    };
+  }
+
+  function finalBox() {
+    return `<div class="final">
+      <div><span>💰</span>${state.money}</div>
+      <div><span>⭐</span>${state.rep}</div>
+      <div><span>🏭</span>${state.carbon}</div>
+    </div>`;
+  }
+
+  function showBankrupt(o) {
+    $screen.innerHTML = `
+      <div class="card center">
+        <div class="big-emoji">💥</div>
+        <h1>Your café went bankrupt!</h1>
+        <p>"${o.name}" cost more money than you had.</p>
+        ${finalBox()}
+        <p>Going green is important, but a business also needs money to survive.
+           Good bosses plan ahead so they can afford big changes.</p>
+        <button class="primary" id="againBtn">Play Again 🔄</button>
+      </div>`;
+    document.getElementById("againBtn").onclick = startGame;
+  }
+
+  function showEnding() {
+    let emoji, title;
+    if (state.carbon <= 20 && state.money > 0) { emoji = "🌱"; title = "Green Leader"; }
+    else if (state.carbon <= 50) { emoji = "🙂"; title = "Getting There"; }
+    else { emoji = "😓"; title = "Old-School Café"; }
+
+    let tradeoff;
+    if (greenCount === ROUNDS.length) {
+      tradeoff = "You paid more at the start, but your great reputation brought in more customers and kept your carbon very low.";
+    } else if (greenCount === 0) {
+      tradeoff = "You saved money on every choice, but your reputation dropped and your café made a lot of carbon.";
+    } else {
+      tradeoff = `You made ${greenCount} green choice${greenCount === 1 ? "" : "s"} out of ${ROUNDS.length}. You balanced saving money with helping the planet.`;
+    }
+
+    $screen.innerHTML = `
+      <div class="card center">
+        <div class="big-emoji">${emoji}</div>
+        <h1>${title}</h1>
+        ${finalBox()}
+        <p>${tradeoff}</p>
+        <button class="primary" id="againBtn">Play Again 🔄</button>
+      </div>`;
+    document.getElementById("againBtn").onclick = startGame;
+  }
+
+  showStart();
+</script>
+</body>
+</html>
