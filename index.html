@@ -2,363 +2,1734 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Green Café Boss</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Carbon Breaker: CEO Edition</title>
 <style>
   :root {
-    --bg: #f3faf0;
-    --card: #ffffff;
-    --text: #2d3a2e;
-    --muted: #6b7a6c;
-    --green: #3fa34d;
-    --green-dark: #2e7d3a;
-    --brown: #8d6e63;
-    --money: #f2b705;
-    --rep: #4a90e2;
-    --carbon: #7a7a7a;
-    --red: #d9534f;
+    --bg: #14121f;
+    --panel: #221e36;
+    --panel-2: #2c2747;
+    --text: #ffffff;
+    --muted: #bdb7dc;
+    --green: #3ee6a8;
+    --teal: #22c1e6;
+    --gold: #ffd166;
+    --red: #ff6b6b;
+    --orange: #ff9f43;
+    --hud-bottom: 60px;
   }
   * { box-sizing: border-box; }
-  body {
+  html, body {
     margin: 0;
-    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    height: 100%;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.5;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
   }
-  .wrap {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 16px;
-  }
-  h1 { font-size: 2rem; margin: 8px 0; text-align: center; }
-  h2 { font-size: 1.4rem; margin: 4px 0 12px; }
-  .card {
-    background: var(--card);
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    margin-bottom: 16px;
-  }
-  .big-emoji { font-size: 4rem; text-align: center; margin: 4px 0; }
-  .center { text-align: center; }
-  .note { font-size: 0.9rem; color: var(--muted); text-align: center; margin-top: 12px; }
-
-  /* Stat bars */
-  .stats { display: grid; gap: 8px; margin-bottom: 16px; }
-  .stat { display: grid; grid-template-columns: 130px 1fr 44px; align-items: center; gap: 8px; }
-  .stat-label { font-weight: 600; }
-  .stat-num { text-align: right; font-weight: 700; }
-  .bar { height: 18px; background: #e3e8e3; border-radius: 9px; overflow: hidden; }
-  .fill { height: 100%; border-radius: 9px; transition: width 0.5s ease; }
-  .fill.money { background: var(--money); }
-  .fill.rep { background: var(--rep); }
-  .fill.carbon { background: var(--carbon); }
-
-  .round-tag { color: var(--muted); font-weight: 600; font-size: 0.95rem; }
-
-  /* Buttons */
-  .options { display: grid; gap: 12px; }
-  button {
-    font: inherit;
-    cursor: pointer;
-    border: none;
-    border-radius: 16px;
-    padding: 16px;
-    width: 100%;
-    font-size: 1.1rem;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-  }
-  button:active { transform: scale(0.98); }
-  .option {
-    background: #fffaf0;
-    border: 3px solid #f0e2c4;
-    text-align: left;
+  body {
     display: flex;
-    gap: 14px;
     align-items: center;
+    justify-content: center;
   }
-  .option:hover { border-color: var(--brown); }
-  .option .emo { font-size: 2.4rem; }
-  .option .name { font-weight: 700; display: block; }
-  .option .fx { font-size: 0.95rem; color: var(--muted); }
-  .primary {
-    background: var(--green);
-    color: white;
+  #game {
+    position: relative;
+    width: 800px;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background: var(--panel);
+    border-radius: 14px 14px 0 0;
     font-weight: 700;
-    font-size: 1.25rem;
-    margin-top: 8px;
+    font-size: 16px;
   }
-  .primary:hover { background: var(--green-dark); }
-
-  .changes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
-  .chip {
-    background: #eef3ee;
+  .hud-item {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 4px 11px;
     border-radius: 999px;
-    padding: 6px 12px;
-    font-weight: 600;
+    white-space: nowrap;
   }
-  .chip.good { background: #dcf3df; color: #22672c; }
-  .chip.bad { background: #fbe1e0; color: #9b2c28; }
-  .why {
-    background: #eef7ff;
-    border-left: 5px solid var(--rep);
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 12px;
+  .hud-item small { color: var(--muted); font-weight: 600; margin-right: 2px; }
+  #hudMoney b { color: var(--gold); }
+  #hudPlanet.good b { color: var(--green); }
+  #hudPlanet.ok b   { color: var(--gold); }
+  #hudPlanet.bad b  { color: var(--red); }
+  #hudExtra {
+    margin-left: auto;
+    font-size: 15px;
+    letter-spacing: 2px;
+    white-space: nowrap;
   }
-  .final { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
-  .final div { background: #f4f6f4; border-radius: 12px; padding: 10px; text-align: center; font-weight: 700; }
-  .final span { display: block; font-size: 1.6rem; }
+  #soundBtn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 0;
+    color: inherit;
+    font-size: 16px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .bump { animation: bump 0.35s ease-out; }
+  @keyframes bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @media (max-width: 560px) {
+    #hud { font-size: 13px; gap: 4px; padding: 5px; }
+    .hud-item { padding: 3px 8px; }
+    .hud-item small { display: none; }
+    #hudExtra { font-size: 12px; }
+  }
 
-  @media (max-width: 420px) {
-    h1 { font-size: 1.6rem; }
-    .stat { grid-template-columns: 110px 1fr 40px; font-size: 0.95rem; }
-    .option .emo { font-size: 2rem; }
+  /* ---------- Canvas ---------- */
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: none;
+    border-radius: 0 0 14px 14px;
+    background: #000;
   }
+
+  /* ---------- Overlay screens ---------- */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    padding: calc(var(--hud-bottom) + 12px) 16px 16px;
+    background: rgba(12, 9, 24, 0.72);
+    overflow-y: auto;
+  }
+  #overlay.show { display: flex; }
+  .card {
+    margin: auto;
+    width: 100%;
+    max-width: 540px;
+    background: var(--panel);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    padding: 22px 22px 24px;
+    text-align: center;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+    animation: pop 0.35s cubic-bezier(.2, 1.4, .5, 1);
+  }
+  .card.wide { max-width: 720px; }
+  @keyframes pop {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .card h1 {
+    margin: 4px 0 2px;
+    font-size: clamp(30px, 7vw, 46px);
+    line-height: 1.05;
+    background: linear-gradient(90deg, var(--green), var(--teal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .card h2 { margin: 6px 0 8px; font-size: clamp(22px, 5vw, 30px); }
+  .card p { margin: 8px 0; line-height: 1.45; font-size: clamp(15px, 3.6vw, 17px); }
+  .tag {
+    display: inline-block;
+    background: var(--gold);
+    color: #3a2a00;
+    font-weight: 800;
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+  .big-icon { font-size: clamp(48px, 12vw, 70px); line-height: 1.1; }
+  .muted { color: var(--muted); }
+  .gold { color: var(--gold); }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .note { font-size: 13px !important; color: var(--muted); margin-top: 14px !important; }
+  .howto {
+    text-align: left;
+    background: var(--panel-2);
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin: 14px 0;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .btn {
+    display: inline-block;
+    margin-top: 10px;
+    border: 0;
+    border-radius: 999px;
+    padding: 13px 34px;
+    font-size: 19px;
+    font-weight: 800;
+    color: #062b22;
+    background: linear-gradient(90deg, var(--green), var(--teal));
+    box-shadow: 0 6px 0 #138a74, 0 10px 20px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: transform 0.1s;
+    font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px) scale(1.03); }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #138a74; }
+  .btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  .btn.small { padding: 9px 16px; font-size: 16px; margin-top: 0; min-width: 110px; }
+  .btn:disabled {
+    background: #4a4560;
+    color: #a9a3c4;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn.owned { background: #2e6b4f; color: #c9ffe6; box-shadow: none; cursor: default; }
+
+  .banner {
+    background: var(--panel-2);
+    border-left: 5px solid var(--gold);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin: 10px 0;
+    text-align: left;
+    font-size: 15px;
+  }
+  .shop-list { display: grid; gap: 10px; margin: 14px 0 6px; }
+  .item {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel-2);
+    border-radius: 16px;
+    padding: 12px;
+    text-align: left;
+  }
+  .item.is-owned { outline: 2px solid var(--green); }
+  .item-icon { font-size: 40px; text-align: center; }
+  .item h3 { margin: 0; font-size: 18px; }
+  .item .effect { margin: 2px 0; color: var(--gold); font-weight: 700; font-size: 15px; }
+  .item .idea { margin: 2px 0 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
+  .item s { color: #9a94b8; font-weight: 400; margin-right: 4px; }
+  @media (max-width: 520px) {
+    .item { grid-template-columns: 40px 1fr; }
+    .item-icon { font-size: 32px; }
+    .item .btn { grid-column: 1 / -1; width: 100%; }
+  }
+  .news-label {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 3px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .stat {
+    background: var(--panel-2);
+    border-radius: 14px;
+    padding: 10px 18px;
+    min-width: 130px;
+  }
+  .stat .label { font-size: 13px; color: var(--muted); }
+  .stat .value { font-size: 26px; font-weight: 900; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div id="stats" class="stats" hidden></div>
-  <div id="screen"></div>
+
+<div id="game">
+  <div id="hud">
+    <span class="hud-item" id="hudMoney">💰 <small>Money</small> <b>$0</b></span>
+    <span class="hud-item" id="hudLives">❤️ <small>Lives</small> <b>3</b></span>
+    <span class="hud-item good" id="hudPlanet">🌍 <small>Planet</small> <b>100</b></span>
+    <span class="hud-item" id="hudCity">🏙️ <b>Seoul</b></span>
+    <span id="hudExtra" title="Your upgrades and news"></span>
+    <button id="soundBtn" title="Sound on/off" aria-label="Sound on/off">🔊</button>
+  </div>
+  <canvas id="canvas"></canvas>
 </div>
 
+<div id="overlay"></div>
+
 <script>
-  const START = { money: 50, rep: 50, carbon: 0 };
+'use strict';
 
-  const ROUNDS = [
-    {
-      title: "Cups ☕",
-      question: "What cups will your café use?",
-      options: [
-        { emo: "🥤", name: "Plastic cups", money: -5, rep: -10, carbon: 10, green: false,
-          result: "You saved money, but some customers did not like all the trash.",
-          why: "Single-use plastic is made from oil and is used once, then becomes waste." },
-        { emo: "☕", name: "Reusable cups", money: -15, rep: 10, carbon: 2, green: true,
-          result: "Reusable cups cost more today, but customers love them!",
-          why: "A cup that is washed and used again and again makes much less waste than new cups every time." }
-      ]
-    },
-    {
-      title: "Coffee Beans 🫘",
-      question: "How will your coffee beans travel to your café?",
-      options: [
-        { emo: "✈️", name: "Air-shipped beans", money: -5, rep: 0, carbon: 15, green: false,
-          result: "The beans arrived fast and cheap for you.",
-          why: "Planes burn a lot of fuel, so flying goods creates more carbon than other ways to ship." },
-        { emo: "🚢", name: "Sea-shipped beans", money: -12, rep: 5, carbon: 5, green: true,
-          result: "The beans took longer and cost more, but your carbon stayed low.",
-          why: "Big ships carry huge loads at once, so each bag of beans makes less carbon than by plane." }
-      ]
-    },
-    {
-      title: "Straws 🥤",
-      question: "What about straws?",
-      options: [
-        { emo: "🧃", name: "Plastic straws", money: -2, rep: -10, carbon: 5, green: false,
-          result: "Cheap and easy, but some customers frowned at the plastic.",
-          why: "Plastic straws are small and hard to recycle, so many end up as litter." },
-        { emo: "🌱", name: "Paper straws or no straw", money: -4, rep: 5, carbon: 1, green: true,
-          result: "A small change that customers noticed and liked.",
-          why: "Small daily choices add up when many people make them every day." }
-      ]
-    },
-    {
-      title: "Electricity ⚡",
-      question: "Where will your café get its power?",
-      options: [
-        { emo: "🔌", name: "Regular power", money: -10, rep: 0, carbon: 20, green: false,
-          result: "The lights are on and the bill is low for now.",
-          why: "Much regular electricity comes from burning coal or gas, which releases carbon." },
-        { emo: "☀️", name: "Solar panels", money: -30, rep: 5, carbon: 2, green: true,
-          result: "Solar panels were a big cost, but now the sun powers your café!",
-          why: "Solar panels cost a lot at first, but sunlight is free and makes no smoke." }
-      ]
-    },
-    {
-      title: "Leftover Food 🥐",
-      question: "At closing time, you have leftover food. What do you do?",
-      options: [
-        { emo: "🗑️", name: "Throw it away", money: 0, rep: -5, carbon: 10, green: false,
-          result: "Quick and easy, but good food went into the trash.",
-          why: "Wasted food also wastes the energy and water used to make it, and it can release gas as it rots." },
-        { emo: "🏷️", name: "Sell at a discount", money: -5, rep: 10, carbon: 2, green: true,
-          result: "Students and neighbors loved the cheap snacks!",
-          why: "When food gets eaten instead of thrown away, nothing used to make it is wasted." }
-      ]
+/* =====================================================================
+   CONFIG — all the numbers you can change to tune the game.
+   ===================================================================== */
+const CONFIG = {
+  // ---- Ball & paddle ----
+  BALL_SPEED: 400,              // Ball speed in Stage 1 (pixels per second)
+  BALL_SPEED_STAGE_BONUS: 0.05, // Each later stage, the ball gets this much faster (0.05 = +5%)
+  BALL_RADIUS: 8,               // Size of the ball
+  PADDLE_WIDTH: 110,            // Normal paddle width (pixels)
+  PADDLE_HEIGHT: 14,            // Paddle thickness
+  PADDLE_KEY_SPEED: 700,        // How fast arrow keys move the paddle (pixels per second)
+  MAX_BOUNCE_ANGLE: 60,         // Degrees: how sharply the ball bounces off the paddle edge
+
+  // ---- Lives ----
+  LIVES_PER_STAGE: 3,           // Lives at the start of every stage
+
+  // ---- Bricks ----
+  STAGE_ROWS: [4, 5, 6],        // Rows of bricks in Stage 1, 2, 3
+  BRICK_COLUMNS: 7,             // Bricks in each row (fewer = shorter stages)
+  FACTORY_CHANCE: [0.2, 0.3, 0.4], // Chance a brick is a dark factory brick, per stage
+  SMOKE_BRICK_MONEY: 10,        // Money from a gray smoke brick
+  FACTORY_BRICK_MONEY: 25,      // Money from a dark factory brick
+  FACTORY_BRICK_HITS: 2,        // Hits needed to break a factory brick
+
+  // ---- Carbon cloud ----
+  CLOUD_INTERVAL: 15,           // Seconds between carbon cloud moves
+  CLOUD_PLANET_DAMAGE: 5,       // Planet Health lost each time the cloud moves down
+  DANGER_MARGIN: 36,            // You lose if bricks get this close (pixels) above the paddle
+
+  // ---- Planet ----
+  START_PLANET_HEALTH: 100,     // Planet Health at the start of the game
+
+  // ---- Shop upgrades ----
+  SOLAR_PRICE: 80,
+  SOLAR_PADDLE_BONUS: 0.30,     // 0.30 = paddle 30% wider
+  FLEET_PRICE: 120,
+  FLEET_EXTRA_BALLS: 1,         // Extra balls at the start of each stage
+  CLEAN_PRICE: 100,
+  CLEAN_CLOUD_SLOWDOWN: 0.30,   // 0.30 = carbon cloud moves 30% slower
+  CLEAN_PLANET_BONUS: 10,       // Planet Health gained when you buy Clean Factory
+
+  // ---- News cards ----
+  NEWS_CARBON_PRICE: 15,        // Money lost each cloud move during "Carbon Price Rises!"
+  NEWS_SUBSIDY_DISCOUNT: 0.30,  // 0.30 = upgrades 30% cheaper
+  NEWS_GREEN_BONUS: 0.50,       // 0.50 = bricks give 50% more money
+  NEWS_HEATWAVE_SPEEDUP: 0.15,  // 0.15 = ball 15% faster
+  NEWS_DELAY_INCREASE: 0.20,    // 0.20 = upgrades 20% more expensive
+
+  // ---- Ending ----
+  ENDING_MONEY_GOAL: 300,       // "Rich" if final money is at least this
+  ENDING_PLANET_GOAL: 70,       // "Green" if final Planet Health is at least this
+
+  // ---- Timing (seconds) ----
+  CITY_NAME_TIME: 2,            // How long the city name shows at the start of a stage
+  STAGE_CLEAR_DELAY: 1.6,       // Pause after the last brick breaks
+  GAME_OVER_DELAY: 1.3,         // Pause before the "went under" screen
+
+  // ---- Juice ----
+  SCREEN_SHAKE: 11,             // Shake strength when the cloud moves (0 = off)
+  PARTICLES_PER_BRICK: 16,      // Particles when a brick breaks
+  SOUND_ON: true                // Start with sound on?
+};
+
+/* =====================================================================
+   Layout (in game pixels; the canvas is scaled to fit the screen)
+   ===================================================================== */
+const W = 800, H = 600;
+const BRICK_H = 24, BRICK_GAP = 6, ROW = BRICK_H + BRICK_GAP; // one "row" step
+const SIDE = 24;               // space at left/right of the brick wall
+const CLOUD_START = 34;        // where the bottom of the carbon cloud starts
+const GRID_GAP = 46;           // space between cloud and first brick row
+const PADDLE_Y = 556;          // top of the paddle
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+
+const STAGES = [
+  { name: 'Seoul' },
+  { name: 'Kuala Lumpur' },
+  { name: 'Future City' }
+];
+
+const pct = n => Math.round(n * 100) + '%';
+
+const UPGRADES = [
+  { id: 'solar', icon: '☀️', name: 'Solar Panels',
+    price: () => CONFIG.SOLAR_PRICE,
+    effect: () => `Paddle ${pct(CONFIG.SOLAR_PADDLE_BONUS)} wider`,
+    idea: 'Solar panels turn sunlight into clean electricity, so less coal and gas is burned.' },
+  { id: 'fleet', icon: '🚚', name: 'Electric Fleet',
+    price: () => CONFIG.FLEET_PRICE,
+    effect: () => `Start each stage with ${CONFIG.FLEET_EXTRA_BALLS} extra ball`,
+    idea: 'Electric trucks have no tailpipe smoke, so the air in cities gets cleaner.' },
+  { id: 'clean', icon: '🏭', name: 'Clean Factory',
+    price: () => CONFIG.CLEAN_PRICE,
+    effect: () => `Carbon cloud moves ${pct(CONFIG.CLEAN_CLOUD_SLOWDOWN)} slower, and Planet Health +${CONFIG.CLEAN_PLANET_BONUS}`,
+    idea: 'Cleaner machines and filters help factories make the same things with less pollution.' }
+];
+
+// type 'stage' = changes the next stage. type 'shop' = changes the next shop.
+const NEWS_CARDS = [
+  { id: 'carbonPrice', type: 'stage', icon: '💸', title: 'Carbon Price Rises!',
+    effect: () => `This stage, every time the carbon cloud moves down, you pay $${CONFIG.NEWS_CARBON_PRICE}.`,
+    idea: 'Some governments make companies pay for the pollution they make.' },
+  { id: 'subsidy', type: 'shop', icon: '🏛️', title: 'Government Green Subsidy!',
+    effect: () => `All upgrades are ${pct(CONFIG.NEWS_SUBSIDY_DISCOUNT)} cheaper in the next shop.`,
+    idea: 'Governments sometimes help companies pay for clean technology.' },
+  { id: 'customers', type: 'stage', icon: '🛍️', title: 'Customers Love Green Brands!',
+    effect: () => `Bricks give ${pct(CONFIG.NEWS_GREEN_BONUS)} more money this stage if you own at least 1 upgrade.`,
+    idea: 'Many shoppers like to buy from companies that care about the planet.' },
+  { id: 'heatwave', type: 'stage', icon: '🔥', title: 'Heatwave!',
+    effect: () => `The ball moves ${pct(CONFIG.NEWS_HEATWAVE_SPEEDUP)} faster this stage.`,
+    idea: 'Climate change can make heatwaves stronger and more common.' },
+  { id: 'delay', type: 'shop', icon: '📦', title: 'Supply Chain Delay!',
+    effect: () => `All upgrades are ${pct(CONFIG.NEWS_DELAY_INCREASE)} more expensive in the next shop.`,
+    idea: 'When shipping is slow, things are harder to get and cost more.' }
+];
+
+const ENDINGS = {
+  tycoon:     { icon: '🌱', title: 'Green Tycoon',
+                text: 'You proved that smart green choices can protect the planet and still make a good profit.' },
+  dirty:      { icon: '💰', title: 'Rich but Dirty',
+                text: 'You made lots of money, but the planet paid the price for your profit.' },
+  broke:      { icon: '🌿', title: 'Green but Broke',
+                text: 'You protected the planet, but a green company also needs profit to keep going.' },
+  struggling: { icon: '😓', title: 'Struggling CEO',
+                text: 'Your company and the planet both struggled, so next time try to balance profit and green choices.' }
+};
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function rr(g, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+}
+
+function circle(g, x, y, r) {
+  g.beginPath();
+  g.arc(x, y, r, 0, Math.PI * 2);
+  g.fill();
+}
+
+/* =====================================================================
+   Sound (tiny synth, no files)
+   ===================================================================== */
+const Sound = {
+  ctx: null,
+  on: CONFIG.SOUND_ON,
+  init() {
+    if (!this.ctx) {
+      try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; }
     }
-  ];
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(freq, dur, type = 'square', vol = 0.06, slideTo = 0, delay = 0) {
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime + delay;
+    const o = this.ctx.createOscillator();
+    const gn = this.ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), t + dur);
+    gn.gain.setValueAtTime(vol, t);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn).connect(this.ctx.destination);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  },
+  rumble() {
+    if (!this.on || !this.ctx) return;
+    const len = Math.floor(this.ctx.sampleRate * 0.6);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 260;
+    const gn = this.ctx.createGain();
+    gn.gain.value = 0.35;
+    src.connect(f).connect(gn).connect(this.ctx.destination);
+    src.start();
+    this.tone(110, 0.5, 'sawtooth', 0.05, 50);
+  },
+  paddle() { this.tone(330, 0.07, 'sine', 0.09, 420); },
+  wall()   { this.tone(240, 0.04, 'sine', 0.04); },
+  hit()    { this.tone(180, 0.07, 'square', 0.05, 120); },
+  brick()  { this.tone(rand(520, 700), 0.1, 'triangle', 0.08, 1100); },
+  coin()   { this.tone(988, 0.08, 'square', 0.04); this.tone(1319, 0.14, 'square', 0.04, 0, 0.07); },
+  lose()   { this.tone(330, 0.4, 'sawtooth', 0.06, 90); },
+  clear()  { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.18, 'triangle', 0.08, 0, i * 0.1)); },
+  over()   { [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.28, 'sawtooth', 0.05, 0, i * 0.18)); }
+};
 
-  let state, roundIndex, greenCount;
+/* =====================================================================
+   City backgrounds (drawn once into hidden canvases)
+   ===================================================================== */
+function makeLayer() {
+  const c = document.createElement('canvas');
+  c.width = W * DPR;
+  c.height = H * DPR;
+  const g = c.getContext('2d');
+  g.scale(DPR, DPR);
+  return [c, g];
+}
 
-  const $screen = document.getElementById("screen");
-  const $stats = document.getElementById("stats");
+function sky(g, stops) {
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  stops.forEach(([p, c]) => gr.addColorStop(p, c));
+  g.fillStyle = gr;
+  g.fillRect(0, 0, W, H);
+}
 
-  function income(rep) {
-    return Math.round(20 + rep / 5);
+function sun(g, x, y, r, core, glow) {
+  const gr = g.createRadialGradient(x, y, r * 0.5, x, y, r * 3.2);
+  gr.addColorStop(0, glow);
+  gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr;
+  g.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+  g.fillStyle = core;
+  circle(g, x, y, r);
+}
+
+function stars(g, seed, count, maxY) {
+  const rnd = mulberry32(seed);
+  for (let i = 0; i < count; i++) {
+    g.fillStyle = `rgba(255,255,255,${0.3 + rnd() * 0.6})`;
+    circle(g, rnd() * W, rnd() * maxY, rnd() * 1.4 + 0.4);
   }
+}
 
-  function renderStats() {
-    const bars = [
-      { label: "💰 Money", value: state.money, max: 200, cls: "money" },
-      { label: "⭐ Reputation", value: state.rep, max: 100, cls: "rep" },
-      { label: "🏭 Carbon", value: state.carbon, max: 100, cls: "carbon" }
-    ];
-    $stats.innerHTML = bars.map(b => {
-      const pct = Math.max(0, Math.min(100, (b.value / b.max) * 100));
-      return `<div class="stat">
-        <span class="stat-label">${b.label}</span>
-        <div class="bar"><div class="fill ${b.cls}" style="width:${pct}%"></div></div>
-        <span class="stat-num">${b.value}</span>
-      </div>`;
-    }).join("");
-    $stats.hidden = false;
+function mountains(g, seed, baseY, amp, color) {
+  const rnd = mulberry32(seed);
+  g.fillStyle = color;
+  g.beginPath();
+  g.moveTo(0, H);
+  let y = baseY;
+  for (let x = 0; x <= W + 40; x += 40) {
+    y = baseY - rnd() * amp;
+    g.lineTo(x, y);
   }
+  g.lineTo(W, H);
+  g.closePath();
+  g.fill();
+}
 
-  function showStart() {
-    $stats.hidden = true;
-    $screen.innerHTML = `
-      <div class="card center">
-        <div class="big-emoji">☕🌱</div>
-        <h1>Green Café Boss</h1>
-        <p>You just opened a small café! 🎉</p>
-        <p>Make 5 business choices. Green choices often cost more today,
-           but they can build your reputation and cut carbon.</p>
-        <p>Can you keep your café alive <b>and</b> help the planet? 🌍</p>
-        <button class="primary" id="startBtn">Start Game ▶️</button>
-        <p class="note">Numbers in this game are simplified for learning.</p>
-      </div>`;
-    document.getElementById("startBtn").onclick = startGame;
+function hill(g, cx, topY, groundY, halfW, color) {
+  g.fillStyle = color;
+  g.beginPath();
+  g.moveTo(cx - halfW, groundY);
+  g.quadraticCurveTo(cx, 2 * topY - groundY, cx + halfW, groundY);
+  g.closePath();
+  g.fill();
+}
+
+// Buildings with little windows. opt: seed, baseY, minH, maxH, minW, maxW, color, win, chance, future, x0, x1
+function skyline(g, opt) {
+  const rnd = mulberry32(opt.seed);
+  let x = opt.x0 ?? -10;
+  const x1 = opt.x1 ?? W + 10;
+  while (x < x1) {
+    const w = lerp(opt.minW, opt.maxW, rnd());
+    const h = lerp(opt.minH, opt.maxH, rnd());
+    const top = opt.baseY - h;
+    g.fillStyle = opt.color;
+    g.fillRect(x, top, w, h + 2);
+    const roof = rnd();
+    if (roof < 0.18) {                       // antenna
+      g.fillRect(x + w / 2 - 1, top - 16, 2, 16);
+    } else if (roof < 0.34) {                // stepped top
+      g.fillRect(x + w * 0.2, top - 10, w * 0.6, 10);
+    } else if (opt.future && roof < 0.6) {   // dome
+      g.beginPath();
+      g.arc(x + w / 2, top, w / 2, Math.PI, 0);
+      g.fill();
+    }
+    if (opt.win) {
+      for (let wy = top + 7; wy < opt.baseY - 6; wy += 10) {
+        for (let wx = x + 5; wx < x + w - 6; wx += 8) {
+          if (rnd() < opt.chance) {
+            g.fillStyle = opt.win;
+            g.fillRect(wx, wy, 3, 4);
+          }
+        }
+      }
+    }
+    if (opt.future && rnd() < 0.5) {         // neon strip
+      g.fillStyle = rnd() < 0.5 ? 'rgba(90,240,255,0.45)' : 'rgba(255,90,220,0.4)';
+      g.fillRect(x + 2, top + 4, w - 4, 2);
+    }
+    x += w + rnd() * 5 - 1;
   }
+}
 
-  function startGame() {
-    state = { ...START };
-    roundIndex = 0;
-    greenCount = 0;
-    showRound();
+// N Seoul Tower style: thin tower with a round deck and an antenna, standing on a hill
+function seoulTower(g, x, baseY, s, color, light) {
+  g.fillStyle = color;
+  g.fillRect(x - 16 * s, baseY - 14 * s, 32 * s, 16 * s);
+  g.beginPath();
+  g.moveTo(x - 8 * s, baseY - 12 * s);
+  g.lineTo(x - 4 * s, baseY - 118 * s);
+  g.lineTo(x + 4 * s, baseY - 118 * s);
+  g.lineTo(x + 8 * s, baseY - 12 * s);
+  g.closePath();
+  g.fill();
+  rr(g, x - 19 * s, baseY - 136 * s, 38 * s, 18 * s, 7 * s); g.fill();
+  rr(g, x - 13 * s, baseY - 149 * s, 26 * s, 14 * s, 5 * s); g.fill();
+  g.fillRect(x - 3 * s, baseY - 200 * s, 6 * s, 52 * s);
+  g.fillRect(x - 1.2 * s, baseY - 226 * s, 2.4 * s, 28 * s);
+  g.fillStyle = light;
+  for (let i = -15; i <= 13; i += 5) g.fillRect(x + i * s, baseY - 129 * s, 2.5 * s, 3 * s);
+  g.fillStyle = '#ff4d4d';
+  circle(g, x, baseY - 227 * s, 2.6 * s);
+}
+
+// Petronas Towers style: two tall stepped towers with a sky bridge
+function petronasTower(g, cx, baseY, s, color, light) {
+  const tiers = [[24, 0, 250], [20, 248, 300], [16, 298, 336], [12, 334, 362], [7, 360, 380]];
+  g.fillStyle = color;
+  tiers.forEach(([hw, from, to]) => g.fillRect(cx - hw * s, baseY - to * s, hw * 2 * s, (to - from) * s));
+  g.beginPath();
+  g.moveTo(cx - 3.5 * s, baseY - 379 * s);
+  g.lineTo(cx, baseY - 445 * s);
+  g.lineTo(cx + 3.5 * s, baseY - 379 * s);
+  g.closePath();
+  g.fill();
+  g.fillStyle = light;
+  tiers.forEach(([hw, from, to]) => {
+    for (let lx = -hw + 3; lx < hw - 1; lx += 5) {
+      g.fillRect(cx + lx * s, baseY - to * s + 3, 1.2 * s, (to - from) * s - 4);
+    }
+  });
+}
+
+function twinTowers(g, cx, baseY, s, color, light) {
+  const off = 42 * s;
+  petronasTower(g, cx - off, baseY, s, color, light);
+  petronasTower(g, cx + off, baseY, s, color, light);
+  g.fillStyle = color;
+  g.fillRect(cx - off + 20 * s, baseY - 176 * s, (off - 20 * s) * 2, 8 * s);
+  g.strokeStyle = color;
+  g.lineWidth = 3 * s;
+  g.beginPath();
+  g.moveTo(cx - off + 22 * s, baseY - 120 * s);
+  g.lineTo(cx, baseY - 170 * s);
+  g.lineTo(cx + off - 22 * s, baseY - 120 * s);
+  g.stroke();
+  g.fillStyle = light;
+  for (let i = -16; i <= 14; i += 6) g.fillRect(cx + i * s, baseY - 173 * s, 3 * s, 2.5 * s);
+}
+
+function palm(g, x, baseY, h, lean, color) {
+  const tx = x + lean, ty = baseY - h;
+  g.strokeStyle = color;
+  g.lineWidth = 6;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(x, baseY);
+  g.quadraticCurveTo(x + lean * 0.15, baseY - h * 0.55, tx, ty);
+  g.stroke();
+  g.fillStyle = color;
+  [-3.0, -2.55, -2.05, -1.57, -1.1, -0.6, -0.15].forEach(a => {
+    const L = 52;
+    const ex = tx + Math.cos(a) * L;
+    const ey = ty + Math.sin(a) * L * 0.6 + 20;
+    const mx = (tx + ex) / 2, my = (ty + ey) / 2;
+    g.beginPath();
+    g.moveTo(tx, ty);
+    g.quadraticCurveTo(mx, my - 14, ex, ey);
+    g.quadraticCurveTo(mx, my - 2, tx, ty);
+    g.fill();
+  });
+}
+
+function chimney(g, x, baseY, h, color) {
+  g.fillStyle = color;
+  g.fillRect(x, baseY - h, 14, h);
+  g.fillStyle = 'rgba(255,90,90,0.6)';
+  g.fillRect(x, baseY - h + 6, 14, 3);
+  for (let i = 0; i < 6; i++) {
+    g.fillStyle = `rgba(120,115,110,${0.35 - i * 0.05})`;
+    circle(g, x + 7 + i * 9, baseY - h - 10 - i * 12, 8 + i * 4);
   }
+}
 
-  function fxText(o) {
-    const sign = n => (n > 0 ? "+" + n : String(n));
-    return `💰 ${sign(o.money)} · ⭐ ${sign(o.rep)} · 🏭 ${sign(o.carbon)}`;
+function bgSeoul() {
+  const [c, g] = makeLayer();
+  sky(g, [[0, '#2a1b4d'], [0.35, '#6b2f6e'], [0.6, '#d9545f'], [0.8, '#ff8f4f'], [0.95, '#ffc56b']]);
+  sun(g, 612, 470, 46, '#ffe08a', 'rgba(255,190,110,0.6)');
+  mountains(g, 7, 500, 50, 'rgba(120,45,90,0.65)');
+  hill(g, 230, 372, 620, 240, '#4a2152');
+  seoulTower(g, 230, 376, 1.05, '#4a2152', '#ffd98a');
+  skyline(g, { seed: 11, baseY: 600, minH: 70, maxH: 150, minW: 28, maxW: 58, color: '#3a1a45', win: 'rgba(255,214,140,0.65)', chance: 0.22 });
+  skyline(g, { seed: 21, baseY: 600, minH: 30, maxH: 90, minW: 40, maxW: 80, color: '#24112e', win: 'rgba(255,224,150,0.9)', chance: 0.3 });
+  g.fillStyle = 'rgba(10,5,25,0.18)';
+  g.fillRect(0, 0, W, H);
+  return c;
+}
+
+function bgKualaLumpur() {
+  const [c, g] = makeLayer();
+  sky(g, [[0, '#0d1b3d'], [0.4, '#2c2a6b'], [0.65, '#9b3f86'], [0.82, '#ff7a5c'], [0.96, '#ffb36b']]);
+  stars(g, 3, 70, 260);
+  sun(g, 150, 488, 40, '#ffcf8a', 'rgba(255,170,110,0.55)');
+  skyline(g, { seed: 31, baseY: 600, minH: 60, maxH: 160, minW: 26, maxW: 50, color: '#3b2a6a', win: 'rgba(255,230,170,0.35)', chance: 0.2 });
+  twinTowers(g, 470, 600, 1, '#1a1238', 'rgba(255,230,168,0.55)');
+  skyline(g, { seed: 41, baseY: 600, minH: 25, maxH: 75, minW: 40, maxW: 90, color: '#150e2b', win: 'rgba(255,224,150,0.85)', chance: 0.28 });
+  palm(g, 40, 600, 150, 18, '#0d0820');
+  palm(g, 95, 600, 115, -10, '#0d0820');
+  palm(g, 715, 600, 135, -16, '#0d0820');
+  palm(g, 775, 600, 165, 8, '#0d0820');
+  g.fillStyle = 'rgba(10,5,25,0.18)';
+  g.fillRect(0, 0, W, H);
+  return c;
+}
+
+function bgFutureCity() {
+  const [c, g] = makeLayer();
+  sky(g, [[0, '#15171d'], [0.45, '#33343b'], [0.75, '#5a5249'], [1, '#6e6252']]);
+  sun(g, 420, 330, 55, 'rgba(225,185,125,0.35)', 'rgba(200,160,110,0.25)');
+  skyline(g, { seed: 51, baseY: 600, minH: 120, maxH: 230, minW: 26, maxW: 52, color: '#2b2c33', future: true });
+  hill(g, 165, 400, 620, 200, '#26262c');
+  seoulTower(g, 165, 404, 0.95, '#26262c', 'rgba(255,220,140,0.6)');
+  twinTowers(g, 590, 600, 0.93, '#1c1c22', 'rgba(110,240,255,0.35)');
+  for (let i = 0; i < 4; i++) {
+    const gr = g.createLinearGradient(0, 330 + i * 60, 0, 400 + i * 60);
+    gr.addColorStop(0, 'rgba(150,138,120,0)');
+    gr.addColorStop(0.5, 'rgba(150,138,120,0.22)');
+    gr.addColorStop(1, 'rgba(150,138,120,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 330 + i * 60, W, 70);
   }
+  chimney(g, 330, 600, 120, '#18181d');
+  chimney(g, 362, 600, 95, '#18181d');
+  skyline(g, { seed: 61, baseY: 600, minH: 30, maxH: 95, minW: 36, maxW: 80, color: '#141418', win: 'rgba(120,240,255,0.55)', chance: 0.18, future: true });
+  g.fillStyle = 'rgba(60,55,50,0.25)';
+  g.fillRect(0, 0, W, H);
+  return c;
+}
 
-  function showRound() {
-    renderStats();
-    const r = ROUNDS[roundIndex];
-    $screen.innerHTML = `
-      <div class="card">
-        <div class="round-tag">Round ${roundIndex + 1} of ${ROUNDS.length}</div>
-        <h2>${r.title}</h2>
-        <p>${r.question}</p>
-        <div class="options">
-          ${r.options.map((o, i) => `
-            <button class="option" data-i="${i}">
-              <span class="emo">${o.emo}</span>
-              <span><span class="name">${o.name}</span><span class="fx">${fxText(o)}</span></span>
-            </button>`).join("")}
-        </div>
-      </div>`;
-    $screen.querySelectorAll(".option").forEach(btn => {
-      btn.onclick = () => choose(r.options[Number(btn.dataset.i)]);
+/* =====================================================================
+   Game state
+   ===================================================================== */
+const canvas = $('#canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = W * DPR;
+canvas.height = H * DPR;
+const overlay = $('#overlay');
+const BG = [bgSeoul(), bgKualaLumpur(), bgFutureCity()];
+
+const game = {
+  state: 'title',      // title | play | clearing | dying | shop | news | over | ending
+  paused: false,
+  stageIndex: 0,
+  money: 0,
+  planet: CONFIG.START_PLANET_HEALTH,
+  lives: CONFIG.LIVES_PER_STAGE,
+  upgrades: { solar: false, fleet: false, clean: false },
+  stageNews: null,     // news card that changes the current stage
+  shopNews: null,      // news card that changes the next shop
+  lastNewsId: null,
+  bricks: [],
+  balls: [],
+  paddle: { x: W / 2, w: CONFIG.PADDLE_WIDTH, squash: 0 },
+  particles: [],
+  floats: [],
+  banner: null,
+  cloudTimer: CONFIG.CLOUD_INTERVAL,
+  cloudOffset: 0,      // how far the cloud has moved (target)
+  cloudShown: 0,       // animated value that follows cloudOffset
+  shake: 0,
+  introT: 0,
+  endT: 0,
+  overReason: '',
+  time: 0,
+  overlayAt: 0
+};
+
+const keys = { left: false, right: false };
+
+function ownsAny() { return Object.values(game.upgrades).some(Boolean); }
+function cloudBottom() { return CLOUD_START + game.cloudShown; }
+function ceilingY() { return cloudBottom() + 10; }
+function dangerY() { return PADDLE_Y - CONFIG.DANGER_MARGIN; }
+
+function cloudInterval() {
+  return CONFIG.CLOUD_INTERVAL / (game.upgrades.clean ? (1 - CONFIG.CLEAN_CLOUD_SLOWDOWN) : 1);
+}
+
+function ballSpeed() {
+  let s = CONFIG.BALL_SPEED * (1 + CONFIG.BALL_SPEED_STAGE_BONUS * game.stageIndex);
+  if (game.stageNews && game.stageNews.id === 'heatwave') s *= 1 + CONFIG.NEWS_HEATWAVE_SPEEDUP;
+  return s;
+}
+
+function moneyMultiplier() {
+  return (game.stageNews && game.stageNews.id === 'customers' && ownsAny()) ? 1 + CONFIG.NEWS_GREEN_BONUS : 1;
+}
+
+function priceMultiplier() {
+  if (!game.shopNews) return 1;
+  if (game.shopNews.id === 'subsidy') return 1 - CONFIG.NEWS_SUBSIDY_DISCOUNT;
+  if (game.shopNews.id === 'delay') return 1 + CONFIG.NEWS_DELAY_INCREASE;
+  return 1;
+}
+
+/* =====================================================================
+   Setup
+   ===================================================================== */
+function buildBricks(i) {
+  const rows = CONFIG.STAGE_ROWS[i];
+  const cols = CONFIG.BRICK_COLUMNS;
+  const bw = (W - SIDE * 2 - BRICK_GAP * (cols - 1)) / cols;
+  const top = CLOUD_START + GRID_GAP;
+  game.bricks = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const factory = Math.random() < CONFIG.FACTORY_CHANCE[i];
+      const hits = factory ? CONFIG.FACTORY_BRICK_HITS : 1;
+      game.bricks.push({
+        x: SIDE + c * (bw + BRICK_GAP), baseY: top + r * ROW, y: top + r * ROW, w: bw, h: BRICK_H,
+        type: factory ? 'factory' : 'smoke', hits, maxHits: hits, flash: 0, seed: Math.random() * 1000
+      });
+    }
+  }
+}
+
+function resetBalls(count) {
+  game.balls = [];
+  for (let i = 0; i < count; i++) {
+    game.balls.push({
+      x: game.paddle.x, y: PADDLE_Y - CONFIG.BALL_RADIUS - 1, vx: 0, vy: 0,
+      stuck: true, offset: (i - (count - 1) / 2) * 22, trail: []
     });
   }
+}
 
-  function chip(label, n, goodIfPositive) {
-    const good = goodIfPositive ? n > 0 : n < 0;
-    const bad = goodIfPositive ? n < 0 : n > 0;
-    const cls = good ? "good" : bad ? "bad" : "";
-    return `<span class="chip ${cls}">${label} ${n > 0 ? "+" + n : n}</span>`;
+function newGame() {
+  game.money = 0;
+  game.planet = CONFIG.START_PLANET_HEALTH;
+  game.upgrades = { solar: false, fleet: false, clean: false };
+  game.stageNews = null;
+  game.shopNews = null;
+  game.lastNewsId = null;
+  startStage(0);
+}
+
+function startStage(i) {
+  game.stageIndex = i;
+  game.lives = CONFIG.LIVES_PER_STAGE;
+  game.cloudOffset = 0;
+  game.cloudShown = 0;
+  game.cloudTimer = cloudInterval();
+  game.paddle.w = CONFIG.PADDLE_WIDTH * (game.upgrades.solar ? 1 + CONFIG.SOLAR_PADDLE_BONUS : 1);
+  game.paddle.x = W / 2;
+  buildBricks(i);
+  resetBalls(1 + (game.upgrades.fleet ? CONFIG.FLEET_EXTRA_BALLS : 0));
+  game.particles = [];
+  game.floats = [];
+  game.banner = null;
+  game.introT = CONFIG.CITY_NAME_TIME;
+  game.paused = false;
+  game.state = 'play';
+  hideOverlay();
+  updateHUD();
+}
+
+function launch() {
+  if (game.state !== 'play') return;
+  if (game.paused) { game.paused = false; return; }
+  if (game.introT > 0) return;
+  const sp = ballSpeed();
+  let n = 0;
+  game.balls.forEach(b => {
+    if (!b.stuck) return;
+    const a = (n === 0 ? rand(-0.25, 0.25) : (n % 2 ? 0.45 : -0.45));
+    b.vx = sp * Math.sin(a);
+    b.vy = -sp * Math.cos(a);
+    b.stuck = false;
+    n++;
+  });
+  if (n) Sound.paddle();
+}
+
+/* =====================================================================
+   Events during play
+   ===================================================================== */
+function moveCloud() {
+  game.cloudOffset += ROW;
+  game.planet = Math.max(0, game.planet - CONFIG.CLOUD_PLANET_DAMAGE);
+  game.shake = CONFIG.SCREEN_SHAKE;
+  game.banner = { text: 'Carbon cloud moved down!', color: '#ff8a5c', t: 0, dur: 1.8, flash: true };
+  addFloat(W / 2, cloudBottom() + 70, `-${CONFIG.CLOUD_PLANET_DAMAGE} 🌍 Planet`, '#ff8a8a', 26);
+  if (game.stageNews && game.stageNews.id === 'carbonPrice') {
+    const cost = Math.min(game.money, CONFIG.NEWS_CARBON_PRICE);
+    game.money -= cost;
+    if (cost > 0) addFloat(W / 2, cloudBottom() + 104, `-$${cost} carbon price`, '#ffb36b', 22);
   }
+  for (let i = 0; i < 22; i++) {
+    game.particles.push({
+      x: rand(0, W), y: cloudBottom() + rand(-10, 20), vx: rand(-20, 20), vy: rand(30, 90),
+      life: 1, max: 1, size: rand(6, 14), grow: 14, color: '#55555f', kind: 'puff', g: 0
+    });
+  }
+  Sound.rumble();
+  updateHUD();
+  const lowest = Math.max(...game.bricks.map(b => b.baseY + b.h));
+  if (game.bricks.length && lowest + game.cloudOffset >= dangerY()) {
+    gameOver('The carbon cloud pushed the pollution all the way down to your company!');
+  }
+}
 
-  function choose(o) {
-    if (o.green) greenCount++;
-    state.money += o.money;
-    state.rep = Math.max(0, Math.min(100, state.rep + o.rep));
-    state.carbon += o.carbon;
-
-    if (state.money < 0) {
-      renderStats();
-      showBankrupt(o);
-      return;
+function hitBrick(br, idx) {
+  br.hits--;
+  if (br.hits > 0) {
+    br.flash = 1;
+    Sound.hit();
+    for (let i = 0; i < 6; i++) {
+      game.particles.push({
+        x: br.x + br.w / 2 + rand(-15, 15), y: br.y + br.h / 2, vx: rand(-120, 120), vy: rand(-160, 40),
+        life: 0.4, max: 0.4, size: rand(2, 3.5), grow: 0, color: '#ffb347', kind: 'spark', g: 500
+      });
     }
+    return;
+  }
+  game.bricks.splice(idx, 1);
+  const base = br.type === 'factory' ? CONFIG.FACTORY_BRICK_MONEY : CONFIG.SMOKE_BRICK_MONEY;
+  const earned = Math.round(base * moneyMultiplier());
+  game.money += earned;
+  addFloat(br.x + br.w / 2, br.y + br.h / 2, `+$${earned}`, '#ffd166', br.type === 'factory' ? 26 : 21);
+  const cx = br.x + br.w / 2, cy = br.y + br.h / 2;
+  for (let i = 0; i < CONFIG.PARTICLES_PER_BRICK; i++) {
+    const smoke = i % 3 !== 0;
+    const a = rand(0, Math.PI * 2), sp = rand(40, smoke ? 140 : 220);
+    game.particles.push(smoke ? {
+      x: cx + rand(-br.w / 3, br.w / 3), y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30,
+      life: rand(0.4, 0.8), max: 0.8, size: rand(4, 9), grow: 18,
+      color: br.type === 'factory' ? '#4b4f5c' : '#b9bdc6', kind: 'puff', g: -40
+    } : {
+      x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60,
+      life: rand(0.5, 0.9), max: 0.9, size: rand(3, 5), grow: 0,
+      color: ['#7dffb3', '#3ee6a8', '#b8ff6b', '#ffffff'][i % 4], kind: 'spark', g: 380, rot: rand(0, 6), vr: rand(-10, 10)
+    });
+  }
+  Sound.brick();
+  updateHUD();
+}
 
-    const earned = income(state.rep);
-    state.money += earned;
-    renderStats();
+function loseLife() {
+  game.lives--;
+  game.shake = 7;
+  Sound.lose();
+  updateHUD();
+  if (game.lives <= 0) {
+    gameOver('You ran out of lives. The pollution was too much for your company!');
+  } else {
+    resetBalls(1);
+    game.banner = { text: 'Ouch! You lost a life', color: '#ff6b6b', t: 0, dur: 1.4 };
+  }
+}
 
-    const last = roundIndex === ROUNDS.length - 1;
-    $screen.innerHTML = `
-      <div class="card">
-        <div class="big-emoji">${o.emo}</div>
-        <h2 class="center">You chose: ${o.name}</h2>
-        <p class="center">${o.result}</p>
-        <div class="changes">
-          ${chip("💰", o.money, true)}
-          ${chip("⭐", o.rep, true)}
-          ${chip("🏭", o.carbon, false)}
-        </div>
-        <p class="center">☕ Customers came in! You earned <b>💰 ${earned}</b> this round.</p>
-        <div class="why"><b>💡 Why it matters:</b> ${o.why}</div>
-        <button class="primary" id="nextBtn">${last ? "See Results 🏁" : "Next ➡️"}</button>
-      </div>`;
-    document.getElementById("nextBtn").onclick = () => {
-      roundIndex++;
-      if (roundIndex < ROUNDS.length) showRound();
-      else showEnding();
-    };
+function gameOver(reason) {
+  if (game.state !== 'play') return;
+  game.state = 'dying';
+  game.endT = CONFIG.GAME_OVER_DELAY;
+  game.overReason = reason;
+  game.balls.forEach(b => { b.vx = 0; b.vy = 0; });
+  Sound.over();
+}
+
+function stageClear() {
+  game.state = 'clearing';
+  game.endT = CONFIG.STAGE_CLEAR_DELAY;
+  game.banner = { text: 'Stage Clear!', color: '#3ee6a8', t: 0, dur: CONFIG.STAGE_CLEAR_DELAY + 1, big: true };
+  for (let i = 0; i < 90; i++) {
+    game.particles.push({
+      x: rand(0, W), y: rand(-60, 0), vx: rand(-40, 40), vy: rand(60, 220),
+      life: 2.2, max: 2.2, size: rand(4, 7), grow: 0,
+      color: ['#3ee6a8', '#ffd166', '#22c1e6', '#ff8fab', '#b8ff6b'][i % 5], kind: 'confetti', g: 60,
+      rot: rand(0, 6), vr: rand(-8, 8)
+    });
+  }
+  Sound.clear();
+}
+
+function addFloat(x, y, text, color, size = 22) {
+  game.floats.push({ x, y, text, color, size, t: 0, dur: 1.1 });
+}
+
+/* =====================================================================
+   Update
+   ===================================================================== */
+function update(dt) {
+  game.time += dt;
+  game.shake = Math.max(0, game.shake - dt * 26);
+
+  // effects always animate
+  game.particles.forEach(p => {
+    p.vy += (p.g || 0) * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    p.size += (p.grow || 0) * dt;
+    if (p.vr) p.rot += p.vr * dt;
+  });
+  game.particles = game.particles.filter(p => p.life > 0);
+  game.floats.forEach(f => { f.t += dt; f.y -= 42 * dt; });
+  game.floats = game.floats.filter(f => f.t < f.dur);
+  if (game.banner) {
+    game.banner.t += dt;
+    if (game.banner.t > game.banner.dur) game.banner = null;
+  }
+  game.bricks.forEach(b => { b.flash = Math.max(0, b.flash - dt * 5); });
+  game.paddle.squash = Math.max(0, game.paddle.squash - dt * 6);
+
+  // cloud slides down smoothly
+  game.cloudShown += (game.cloudOffset - game.cloudShown) * Math.min(1, dt * 9);
+  if (Math.abs(game.cloudOffset - game.cloudShown) < 0.2) game.cloudShown = game.cloudOffset;
+  game.bricks.forEach(b => { b.y = b.baseY + game.cloudShown; });
+
+  if (game.state === 'clearing' || game.state === 'dying') {
+    game.endT -= dt;
+    if (game.endT <= 0) {
+      if (game.state === 'dying') showGameOver();
+      else if (game.stageIndex >= STAGES.length - 1) showEnding();
+      else showShop();
+    }
+    return;
+  }
+  if (game.state !== 'play') return;
+
+  // paddle
+  const p = game.paddle;
+  if (keys.left) p.x -= CONFIG.PADDLE_KEY_SPEED * dt;
+  if (keys.right) p.x += CONFIG.PADDLE_KEY_SPEED * dt;
+  p.x = clamp(p.x, p.w / 2, W - p.w / 2);
+
+  if (game.introT > 0) game.introT -= dt;
+
+  // carbon cloud timer (runs only while a ball is flying)
+  const flying = game.balls.some(b => !b.stuck);
+  if (flying && game.introT <= 0) {
+    game.cloudTimer -= dt;
+    if (game.cloudTimer <= 0) {
+      game.cloudTimer += cloudInterval();
+      moveCloud();
+      if (game.state !== 'play') return;
+    }
   }
 
-  function finalBox() {
-    return `<div class="final">
-      <div><span>💰</span>${state.money}</div>
-      <div><span>⭐</span>${state.rep}</div>
-      <div><span>🏭</span>${state.carbon}</div>
-    </div>`;
-  }
-
-  function showBankrupt(o) {
-    $screen.innerHTML = `
-      <div class="card center">
-        <div class="big-emoji">💥</div>
-        <h1>Your café went bankrupt!</h1>
-        <p>"${o.name}" cost more money than you had.</p>
-        ${finalBox()}
-        <p>Going green is important, but a business also needs money to survive.
-           Good bosses plan ahead so they can afford big changes.</p>
-        <button class="primary" id="againBtn">Play Again 🔄</button>
-      </div>`;
-    document.getElementById("againBtn").onclick = startGame;
-  }
-
-  function showEnding() {
-    let emoji, title;
-    if (state.carbon <= 20 && state.money > 0) { emoji = "🌱"; title = "Green Leader"; }
-    else if (state.carbon <= 50) { emoji = "🙂"; title = "Getting There"; }
-    else { emoji = "😓"; title = "Old-School Café"; }
-
-    let tradeoff;
-    if (greenCount === ROUNDS.length) {
-      tradeoff = "You paid more at the start, but your great reputation brought in more customers and kept your carbon very low.";
-    } else if (greenCount === 0) {
-      tradeoff = "You saved money on every choice, but your reputation dropped and your café made a lot of carbon.";
+  // balls
+  game.balls.forEach(b => {
+    if (b.stuck) {
+      b.x = clamp(p.x + b.offset, CONFIG.BALL_RADIUS, W - CONFIG.BALL_RADIUS);
+      b.y = PADDLE_Y - CONFIG.BALL_RADIUS - 1;
+      b.trail.length = 0;
     } else {
-      tradeoff = `You made ${greenCount} green choice${greenCount === 1 ? "" : "s"} out of ${ROUNDS.length}. You balanced saving money with helping the planet.`;
+      moveBall(b, dt);
+      b.trail.push({ x: b.x, y: b.y });
+      if (b.trail.length > 9) b.trail.shift();
+    }
+  });
+  game.balls = game.balls.filter(b => !b.dead);
+
+  if (game.bricks.length === 0) { stageClear(); return; }
+  if (game.balls.length === 0) loseLife();
+}
+
+function moveBall(b, dt) {
+  const r = CONFIG.BALL_RADIUS;
+  const p = game.paddle;
+  const speed = Math.hypot(b.vx, b.vy);
+  const steps = Math.max(1, Math.ceil(speed * dt / 4));
+  const sdt = dt / steps;
+  for (let s = 0; s < steps; s++) {
+    b.x += b.vx * sdt;
+    b.y += b.vy * sdt;
+
+    // walls and the cloud "ceiling"
+    if (b.x - r < 0) { b.x = r; b.vx = Math.abs(b.vx); Sound.wall(); }
+    if (b.x + r > W) { b.x = W - r; b.vx = -Math.abs(b.vx); Sound.wall(); }
+    const ceil = ceilingY();
+    if (b.y - r < ceil) { b.y = ceil + r; b.vy = Math.abs(b.vy); Sound.wall(); }
+
+    // paddle
+    if (b.vy > 0 && b.y + r >= PADDLE_Y && b.y + r <= PADDLE_Y + CONFIG.PADDLE_HEIGHT + 10 &&
+        b.x >= p.x - p.w / 2 - r && b.x <= p.x + p.w / 2 + r) {
+      const hit = clamp((b.x - p.x) / (p.w / 2), -1, 1);
+      const ang = hit * CONFIG.MAX_BOUNCE_ANGLE * Math.PI / 180;
+      const sp = ballSpeed();
+      b.vx = sp * Math.sin(ang);
+      b.vy = -sp * Math.cos(ang);
+      b.y = PADDLE_Y - r;
+      p.squash = 1;
+      Sound.paddle();
     }
 
-    $screen.innerHTML = `
-      <div class="card center">
-        <div class="big-emoji">${emoji}</div>
-        <h1>${title}</h1>
-        ${finalBox()}
-        <p>${tradeoff}</p>
-        <button class="primary" id="againBtn">Play Again 🔄</button>
-      </div>`;
-    document.getElementById("againBtn").onclick = startGame;
+    // bricks
+    for (let i = 0; i < game.bricks.length; i++) {
+      const br = game.bricks[i];
+      if (b.x + r < br.x || b.x - r > br.x + br.w || b.y + r < br.y || b.y - r > br.y + br.h) continue;
+      const cx = clamp(b.x, br.x, br.x + br.w), cy = clamp(b.y, br.y, br.y + br.h);
+      const dx = b.x - cx, dy = b.y - cy;
+      if (dx * dx + dy * dy > r * r) continue;
+      const leftSide = b.x < br.x + br.w / 2, topSide = b.y < br.y + br.h / 2;
+      const ox = leftSide ? b.x + r - br.x : br.x + br.w - (b.x - r);
+      const oy = topSide ? b.y + r - br.y : br.y + br.h - (b.y - r);
+      if (ox < oy) {
+        b.vx = leftSide ? -Math.abs(b.vx) : Math.abs(b.vx);
+        b.x += leftSide ? -ox : ox;
+      } else {
+        b.vy = topSide ? -Math.abs(b.vy) : Math.abs(b.vy);
+        b.y += topSide ? -oy : oy;
+      }
+      hitBrick(br, i);
+      break;
+    }
+
+    if (b.y - r > H) { b.dead = true; return; }
+  }
+  // never let the ball get stuck going almost sideways
+  const sp = Math.hypot(b.vx, b.vy);
+  if (Math.abs(b.vy) < sp * 0.28) {
+    b.vy = (b.vy < 0 ? -1 : 1) * sp * 0.28;
+    b.vx = (b.vx < 0 ? -1 : 1) * Math.sqrt(sp * sp - b.vy * b.vy);
+  }
+}
+
+/* =====================================================================
+   Drawing
+   ===================================================================== */
+function render() {
+  const g = ctx;
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  g.fillStyle = '#000';
+  g.fillRect(0, 0, W, H);
+  g.save();
+  if (game.shake > 0) g.translate(rand(-1, 1) * game.shake, rand(-1, 1) * game.shake);
+
+  g.drawImage(BG[game.stageIndex], 0, 0, W, H);
+
+  // the sky gets hazier as Planet Health goes down
+  const haze = (1 - game.planet / 100) * 0.5;
+  if (haze > 0) {
+    const gr = g.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, `rgba(60,52,46,${haze})`);
+    gr.addColorStop(1, `rgba(90,80,65,${haze * 0.6})`);
+    g.fillStyle = gr;
+    g.fillRect(0, 0, W, H);
   }
 
-  showStart();
+  drawDangerLine(g);
+  game.bricks.forEach(b => drawBrick(g, b));
+  drawCloud(g);
+  drawPaddle(g);
+  if (game.state !== 'title') game.balls.forEach(b => drawBall(g, b));
+  drawParticles(g);
+  drawFloats(g);
+  drawCloudTimer(g);
+  drawMessages(g);
+  g.restore();
+}
+
+function outlinedText(g, text, x, y, size, color, weight = 900) {
+  g.font = `${weight} ${size}px "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineWidth = Math.max(3, size / 5);
+  g.strokeStyle = 'rgba(20,10,30,0.85)';
+  g.strokeText(text, x, y);
+  g.fillStyle = color;
+  g.fillText(text, x, y);
+}
+
+function drawDangerLine(g) {
+  if (game.state === 'title') return;
+  const y = dangerY();
+  const lowest = game.bricks.length ? Math.max(...game.bricks.map(b => b.y + b.h)) : 0;
+  const near = clamp(1 - (y - lowest) / (ROW * 3), 0, 1);
+  const pulse = near > 0 ? (0.5 + 0.5 * Math.sin(game.time * 10)) * near : 0;
+  g.save();
+  g.setLineDash([10, 8]);
+  g.strokeStyle = `rgba(255,90,90,${0.3 + pulse * 0.6})`;
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(0, y);
+  g.lineTo(W, y);
+  g.stroke();
+  g.restore();
+  g.font = '700 12px system-ui, sans-serif';
+  g.textAlign = 'right';
+  g.textBaseline = 'bottom';
+  g.fillStyle = `rgba(255,140,140,${0.55 + pulse * 0.45})`;
+  g.fillText('⚠️ DANGER ZONE', W - 8, y - 3);
+}
+
+function drawBrick(g, b) {
+  const { x, y, w, h } = b;
+  if (b.type === 'smoke') {
+    const gr = g.createLinearGradient(0, y, 0, y + h);
+    gr.addColorStop(0, '#d3d6dd');
+    gr.addColorStop(1, '#9196a1');
+    g.fillStyle = gr;
+    rr(g, x, y, w, h, 7);
+    g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.35)';
+    const rnd = mulberry32(b.seed | 0);
+    for (let i = 0; i < 3; i++) circle(g, x + 14 + rnd() * (w - 28), y + 8 + rnd() * (h - 14), 5 + rnd() * 4);
+    g.strokeStyle = 'rgba(255,255,255,0.5)';
+    g.lineWidth = 1.5;
+    rr(g, x + 1, y + 1, w - 2, h - 2, 6);
+    g.stroke();
+  } else {
+    const damaged = b.hits < b.maxHits;
+    const gr = g.createLinearGradient(0, y, 0, y + h);
+    gr.addColorStop(0, damaged ? '#6b6f7c' : '#4a4f5c');
+    gr.addColorStop(1, damaged ? '#4b4f5a' : '#262931');
+    g.fillStyle = gr;
+    rr(g, x, y, w, h, 7);
+    g.fill();
+    // little factory icon
+    const cx = x + w / 2, cy = y + h / 2;
+    g.fillStyle = 'rgba(255,255,255,0.28)';
+    g.beginPath();
+    g.moveTo(cx - 16, cy + 8);
+    g.lineTo(cx - 16, cy);
+    g.lineTo(cx - 8, cy - 5);
+    g.lineTo(cx - 8, cy);
+    g.lineTo(cx, cy - 5);
+    g.lineTo(cx, cy);
+    g.lineTo(cx + 6, cy);
+    g.lineTo(cx + 6, cy - 9);
+    g.lineTo(cx + 11, cy - 9);
+    g.lineTo(cx + 11, cy + 8);
+    g.closePath();
+    g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.18)';
+    circle(g, cx + 12, cy - 12, 3);
+    circle(g, cx + 17, cy - 14, 2.4);
+    if (damaged) {
+      g.strokeStyle = 'rgba(255,255,255,0.6)';
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.moveTo(x + w * 0.2, y + 2);
+      g.lineTo(x + w * 0.28, y + h * 0.45);
+      g.lineTo(x + w * 0.22, y + h * 0.7);
+      g.lineTo(x + w * 0.3, y + h - 2);
+      g.moveTo(x + w * 0.78, y + h - 2);
+      g.lineTo(x + w * 0.72, y + h * 0.5);
+      g.lineTo(x + w * 0.8, y + h * 0.3);
+      g.stroke();
+    }
+    g.strokeStyle = 'rgba(255,170,90,0.45)';
+    g.lineWidth = 1.5;
+    rr(g, x + 1, y + 1, w - 2, h - 2, 6);
+    g.stroke();
+  }
+  if (b.flash > 0) {
+    g.fillStyle = `rgba(255,255,255,${b.flash * 0.7})`;
+    rr(g, x, y, w, h, 7);
+    g.fill();
+  }
+}
+
+function drawCloud(g) {
+  const cb = cloudBottom();
+  const t = game.time;
+  const gr = g.createLinearGradient(0, 0, 0, cb);
+  gr.addColorStop(0, '#1b1b21');
+  gr.addColorStop(1, '#3f3f49');
+  g.fillStyle = gr;
+  g.fillRect(-20, -20, W + 40, cb + 14);
+  for (let i = 0; i < 23; i++) {
+    const x = i * 37 - 12 + Math.sin(t * 0.8 + i) * 4;
+    const r = 15 + ((i * 7) % 3) * 4;
+    g.fillStyle = '#3f3f49';
+    circle(g, x, cb - 4 + Math.sin(t * 1.4 + i * 2) * 2, r);
+  }
+  for (let i = 0; i < 23; i++) {
+    const x = i * 37 + 6 + Math.sin(t * 0.6 + i * 3) * 5;
+    g.fillStyle = 'rgba(110,110,125,0.45)';
+    circle(g, x, cb - 12 + Math.sin(t + i) * 2, 9 + (i % 3) * 3);
+  }
+  g.font = '800 15px system-ui, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = 'rgba(255,255,255,0.13)';
+  for (let x = 60; x < W; x += 140) g.fillText('CO₂', x + Math.sin(t + x) * 6, cb - 14);
+}
+
+function drawCloudTimer(g) {
+  if (game.state !== 'play' && game.state !== 'clearing' && game.state !== 'dying') return;
+  const total = cloudInterval();
+  const left = Math.max(0, game.cloudTimer);
+  const paused = !game.balls.some(b => !b.stuck) || game.introT > 0;
+  const x = W - 168, y = 6, w = 160, h = 22;
+  g.fillStyle = 'rgba(0,0,0,0.45)';
+  rr(g, x, y, w, h, 11);
+  g.fill();
+  const danger = left < 3 && !paused;
+  g.fillStyle = danger ? (Math.sin(game.time * 16) > 0 ? '#ff5d5d' : '#ffb36b') : '#9aa0ad';
+  rr(g, x + 3, y + 3, Math.max(8, (w - 6) * (left / total)), h - 6, 8);
+  g.fill();
+  g.font = '800 12px system-ui, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = '#fff';
+  g.fillText(paused ? '☁️ Cloud waits…' : `☁️ Cloud moves in ${Math.ceil(left)}s`, x + w / 2, y + h / 2 + 1);
+}
+
+function drawPaddle(g) {
+  if (game.state === 'title') return;
+  const p = game.paddle;
+  const w = p.w * (1 + p.squash * 0.1);
+  const h = CONFIG.PADDLE_HEIGHT * (1 - p.squash * 0.3);
+  const x = p.x - w / 2, y = PADDLE_Y + (CONFIG.PADDLE_HEIGHT - h);
+  g.save();
+  g.shadowColor = '#3ee6a8';
+  g.shadowBlur = 18;
+  const gr = g.createLinearGradient(x, 0, x + w, 0);
+  gr.addColorStop(0, '#5ef2b8');
+  gr.addColorStop(1, '#22c1e6');
+  g.fillStyle = gr;
+  rr(g, x, y, w, h, h / 2);
+  g.fill();
+  g.restore();
+  if (game.upgrades.solar) {
+    g.fillStyle = '#1d4e9e';
+    const n = Math.floor((w - 24) / 16);
+    const start = p.x - (n * 16) / 2;
+    for (let i = 0; i < n; i++) {
+      g.fillRect(start + i * 16 + 1, y + 2, 14, h - 4);
+      g.fillStyle = 'rgba(160,210,255,0.6)';
+      g.fillRect(start + i * 16 + 7.5, y + 2, 1, h - 4);
+      g.fillStyle = '#1d4e9e';
+    }
+  }
+  g.fillStyle = 'rgba(255,255,255,0.55)';
+  rr(g, x + 6, y + 2, w - 12, 3, 2);
+  g.fill();
+  g.font = '900 10px system-ui, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = game.upgrades.solar ? '#ffe66d' : '#0b4a3c';
+  g.fillText('CEO', p.x, y + h / 2 + 1);
+}
+
+function drawBall(g, b) {
+  const r = CONFIG.BALL_RADIUS;
+  b.trail.forEach((t, i) => {
+    const a = (i + 1) / b.trail.length;
+    g.fillStyle = `rgba(255,170,60,${a * 0.35})`;
+    circle(g, t.x, t.y, r * a * 0.9);
+  });
+  g.save();
+  g.shadowColor = '#ffcf33';
+  g.shadowBlur = 16;
+  const gr = g.createRadialGradient(b.x - 3, b.y - 3, 1, b.x, b.y, r);
+  gr.addColorStop(0, '#fffbe0');
+  gr.addColorStop(0.5, '#ffd84d');
+  gr.addColorStop(1, '#ff9f1c');
+  g.fillStyle = gr;
+  circle(g, b.x, b.y, r);
+  g.restore();
+}
+
+function drawParticles(g) {
+  game.particles.forEach(p => {
+    const a = clamp(p.life / p.max, 0, 1);
+    g.globalAlpha = p.kind === 'puff' ? a * 0.7 : a;
+    g.fillStyle = p.color;
+    if (p.kind === 'puff') {
+      circle(g, p.x, p.y, p.size);
+    } else {
+      g.save();
+      g.translate(p.x, p.y);
+      g.rotate(p.rot || 0);
+      if (p.kind === 'confetti') g.fillRect(-p.size / 2, -p.size, p.size, p.size * 2);
+      else g.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+      g.restore();
+    }
+  });
+  g.globalAlpha = 1;
+}
+
+function drawFloats(g) {
+  game.floats.forEach(f => {
+    const k = f.t / f.dur;
+    const pop = k < 0.15 ? 0.6 + (k / 0.15) * 0.5 : 1.1 - Math.min(0.1, (k - 0.15));
+    g.globalAlpha = clamp(1 - Math.max(0, k - 0.5) * 2, 0, 1);
+    outlinedText(g, f.text, f.x, f.y, f.size * pop, f.color);
+  });
+  g.globalAlpha = 1;
+}
+
+function drawMessages(g) {
+  // city name at the start of a stage
+  if (game.state === 'play' && game.introT > 0) {
+    const t = 1 - game.introT / CONFIG.CITY_NAME_TIME;
+    const a = t < 0.15 ? t / 0.15 : t > 0.8 ? (1 - t) / 0.2 : 1;
+    g.globalAlpha = clamp(a, 0, 1);
+    g.fillStyle = 'rgba(10,6,25,0.55)';
+    g.fillRect(0, 300, W, 130);
+    outlinedText(g, `STAGE ${game.stageIndex + 1}`, W / 2, 326, 22, '#ffd166');
+    outlinedText(g, STAGES[game.stageIndex].name, W / 2, 368, 54 + t * 6, '#ffffff');
+    if (game.stageNews) outlinedText(g, `${game.stageNews.icon} ${game.stageNews.title}`, W / 2, 410, 18, '#ffb36b', 800);
+    g.globalAlpha = 1;
+  }
+
+  // launch hint
+  if (game.state === 'play' && game.introT <= 0 && game.balls.some(b => b.stuck) && !game.paused) {
+    g.globalAlpha = 0.6 + 0.4 * Math.sin(game.time * 5);
+    outlinedText(g, 'Click, tap, or press Space to launch!', W / 2, PADDLE_Y - 70, 22, '#ffffff', 800);
+    g.globalAlpha = 1;
+  }
+
+  // banner messages
+  const bn = game.banner;
+  if (bn) {
+    let a = clamp(Math.min(bn.t / 0.15, (bn.dur - bn.t) / 0.3), 0, 1);
+    if (bn.flash && bn.t < 1.1) a *= Math.sin(bn.t * 22) > -0.3 ? 1 : 0.35;
+    const s = bn.t < 0.2 ? 0.7 + bn.t * 1.5 : 1;
+    g.globalAlpha = a;
+    outlinedText(g, bn.text, W / 2, 300, (bn.big ? 58 : 36) * s, bn.color);
+    g.globalAlpha = 1;
+  }
+
+  if (game.paused && game.state === 'play') {
+    g.fillStyle = 'rgba(0,0,0,0.5)';
+    g.fillRect(0, 0, W, H);
+    outlinedText(g, 'Paused', W / 2, H / 2 - 20, 54, '#ffffff');
+    outlinedText(g, 'Press P or click to continue', W / 2, H / 2 + 30, 20, '#bdb7dc', 700);
+  }
+}
+
+/* =====================================================================
+   HUD
+   ===================================================================== */
+const hudPrev = {};
+function setHud(id, html, value) {
+  const el = $(id);
+  el.querySelector('b').innerHTML = html;
+  if (hudPrev[id] !== undefined && hudPrev[id] !== value) {
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+  hudPrev[id] = value;
+}
+
+function updateHUD() {
+  setHud('#hudMoney', '$' + game.money, game.money);
+  setHud('#hudLives', String(game.lives), game.lives);
+  setHud('#hudPlanet', String(game.planet), game.planet);
+  setHud('#hudCity', STAGES[game.stageIndex].name, game.stageIndex);
+  const pl = $('#hudPlanet');
+  pl.classList.toggle('good', game.planet >= 70);
+  pl.classList.toggle('ok', game.planet >= 40 && game.planet < 70);
+  pl.classList.toggle('bad', game.planet < 40);
+  const icons = UPGRADES.filter(u => game.upgrades[u.id]).map(u => u.icon).join('');
+  const news = game.stageNews && game.state !== 'title' ? ' 📰' + game.stageNews.icon : '';
+  $('#hudExtra').textContent = icons + news;
+  $('#hudExtra').title = [
+    ...UPGRADES.filter(u => game.upgrades[u.id]).map(u => u.name),
+    game.stageNews ? 'News: ' + game.stageNews.title : ''
+  ].filter(Boolean).join(' • ') || 'No upgrades yet';
+}
+
+/* =====================================================================
+   Screens (title, shop, news, game over, ending)
+   ===================================================================== */
+function showOverlay(html, focusSelector) {
+  overlay.innerHTML = html;
+  overlay.classList.add('show');
+  overlay.scrollTop = 0;
+  game.overlayAt = performance.now();
+  canvas.style.cursor = 'default';
+  if (focusSelector) {
+    setTimeout(() => { const el = overlay.querySelector(focusSelector); if (el) el.focus({ preventScroll: true }); }, 450);
+  }
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  canvas.style.cursor = 'none';
+}
+
+function showTitle() {
+  game.state = 'title';
+  showOverlay(`
+    <div class="card">
+      <div class="big-icon">🏭💰🌍</div>
+      <h1>Carbon Breaker</h1>
+      <span class="tag">CEO EDITION</span>
+      <p>You are the CEO of a big company. Break the pollution bricks to earn money.
+         Between stages, choose: keep the money as profit, or invest in green upgrades?</p>
+      <div class="howto">
+        🖱️ <b>Move:</b> mouse, touch drag, or ← → keys<br>
+        🚀 <b>Launch:</b> click, tap, or Space<br>
+        ☁️ Every ${CONFIG.CLOUD_INTERVAL} seconds, the carbon cloud pushes the bricks down.<br>
+        🌍 Each push hurts Planet Health. Don't let the bricks reach you!
+      </div>
+      <button class="btn" data-action="start">▶ Start</button>
+      <p class="note">Numbers in this game are simplified for learning.</p>
+    </div>`, '.btn');
+}
+
+function showShop() {
+  game.state = 'shop';
+  const m = priceMultiplier();
+  const stageName = STAGES[game.stageIndex].name;
+  const items = UPGRADES.map(u => {
+    const base = u.price();
+    const price = Math.round(base * m);
+    const owned = game.upgrades[u.id];
+    const can = game.money >= price;
+    const priceText = price !== base ? `<s>$${base}</s>$${price}` : `$${price}`;
+    const btn = owned
+      ? `<button class="btn small owned" disabled>Owned ✓</button>`
+      : `<button class="btn small" data-action="buy" data-arg="${u.id}" ${can ? '' : 'disabled'}>${can ? 'Buy ' : 'Need '}${priceText}</button>`;
+    return `
+      <div class="item ${owned ? 'is-owned' : ''}">
+        <div class="item-icon">${u.icon}</div>
+        <div>
+          <h3>${u.name}</h3>
+          <p class="effect">${u.effect()}</p>
+          <p class="idea">💡 ${u.idea}</p>
+        </div>
+        ${btn}
+      </div>`;
+  }).join('');
+  const newsBanner = game.shopNews
+    ? `<div class="banner">${game.shopNews.icon} <b>${game.shopNews.title}</b> ${game.shopNews.effect().replace(' in the next shop', ' in this shop')}</div>`
+    : '';
+  showOverlay(`
+    <div class="card wide">
+      <h2>🏢 CEO Shop</h2>
+      <p>${stageName} is clear! You have <b class="gold">$${game.money}</b>.</p>
+      <p class="muted">Invest in green upgrades, or keep the money as profit.</p>
+      ${newsBanner}
+      <div class="shop-list">${items}</div>
+      <p class="note">Money you keep counts as profit at the end of the game.</p>
+      <button class="btn" data-action="next">Next Stage ▶</button>
+    </div>`);
+}
+
+function buy(id) {
+  const u = UPGRADES.find(x => x.id === id);
+  if (!u || game.upgrades[id]) return;
+  const price = Math.round(u.price() * priceMultiplier());
+  if (game.money < price) return;
+  game.money -= price;
+  game.upgrades[id] = true;
+  if (id === 'clean') game.planet = Math.min(100, game.planet + CONFIG.CLEAN_PLANET_BONUS);
+  Sound.coin();
+  updateHUD();
+  const y = overlay.scrollTop;
+  showShop();
+  overlay.scrollTop = y;
+}
+
+function showNews() {
+  game.state = 'news';
+  game.shopNews = null; // the old shop effect has been used
+  game.stageNews = null;
+  const nextStage = game.stageIndex + 1;
+  const isLastStage = nextStage >= STAGES.length - 1;
+  // before the final stage there is no shop left, so only stage cards can appear
+  let pool = NEWS_CARDS.filter(c => !(isLastStage && c.type === 'shop'));
+  const fresh = pool.filter(c => c.id !== game.lastNewsId);
+  if (fresh.length) pool = fresh;
+  const card = pool[Math.floor(Math.random() * pool.length)];
+  game.lastNewsId = card.id;
+  if (card.type === 'stage') game.stageNews = card;
+  else game.shopNews = card;
+
+  let extra = '';
+  if (card.id === 'customers') {
+    extra = ownsAny()
+      ? `<p class="green"><b>✅ You own a green upgrade, so the bonus is ON!</b></p>`
+      : `<p class="red"><b>❌ You have no green upgrades, so there is no bonus.</b></p>`;
+  }
+  showOverlay(`
+    <div class="card">
+      <span class="news-label">BREAKING NEWS</span>
+      <div class="big-icon" style="margin-top:10px">${card.icon}</div>
+      <h2>${card.title}</h2>
+      <p><b class="gold">${card.effect()}</b></p>
+      ${extra}
+      <p class="muted">💡 ${card.idea}</p>
+      <p class="muted">Next: <b>Stage ${nextStage + 1} — ${STAGES[nextStage].name}</b></p>
+      <button class="btn" data-action="continue">Continue ▶</button>
+    </div>`, '.btn');
+  updateHUD();
+}
+
+function showGameOver() {
+  game.state = 'over';
+  updateHUD();
+  showOverlay(`
+    <div class="card">
+      <div class="big-icon">📉</div>
+      <h2>Your company went under</h2>
+      <p>${game.overReason}</p>
+      <div class="stats">
+        <div class="stat"><div class="label">🏙️ Reached</div><div class="value">${STAGES[game.stageIndex].name}</div></div>
+        <div class="stat"><div class="label">💰 Money</div><div class="value gold">$${game.money}</div></div>
+        <div class="stat"><div class="label">🌍 Planet Health</div><div class="value">${game.planet}</div></div>
+      </div>
+      <p class="muted">💡 Tip: The 🏭 Clean Factory slows down the carbon cloud.</p>
+      <button class="btn" data-action="restart">Try Again</button>
+    </div>`, '.btn');
+}
+
+function showEnding() {
+  game.state = 'ending';
+  const rich = game.money >= CONFIG.ENDING_MONEY_GOAL;
+  const green = game.planet >= CONFIG.ENDING_PLANET_GOAL;
+  const e = ENDINGS[rich && green ? 'tycoon' : rich ? 'dirty' : green ? 'broke' : 'struggling'];
+  const owned = UPGRADES.filter(u => game.upgrades[u.id]);
+  showOverlay(`
+    <div class="card">
+      <p class="muted" style="margin:0">Your final result</p>
+      <div class="big-icon">${e.icon}</div>
+      <h1>${e.title}</h1>
+      <div class="stats">
+        <div class="stat"><div class="label">💰 Final Money</div><div class="value gold">$${game.money}</div></div>
+        <div class="stat"><div class="label">🌍 Planet Health</div><div class="value ${green ? 'green' : 'red'}">${game.planet}</div></div>
+      </div>
+      <p>${e.text}</p>
+      <p class="muted">Green upgrades: ${owned.length ? owned.map(u => u.icon + ' ' + u.name).join(', ') : 'none'}</p>
+      <button class="btn" data-action="restart">Play Again</button>
+    </div>`, '.btn');
+}
+
+const actions = {
+  start: () => newGame(),
+  restart: () => newGame(),
+  buy: id => buy(id),
+  next: () => showNews(),
+  continue: () => startStage(game.stageIndex + 1)
+};
+
+overlay.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn || btn.disabled) return;
+  if (performance.now() - game.overlayAt < 350) return; // avoid accidental double taps
+  Sound.init();
+  actions[btn.dataset.action](btn.dataset.arg);
+});
+
+/* =====================================================================
+   Input
+   ===================================================================== */
+function pointerToGame(e) {
+  const r = canvas.getBoundingClientRect();
+  return (e.clientX - r.left) / r.width * W;
+}
+
+canvas.addEventListener('pointermove', e => {
+  if (game.state !== 'play' || game.paused) return;
+  game.paddle.x = pointerToGame(e);
+});
+
+canvas.addEventListener('pointerdown', e => {
+  Sound.init();
+  if (game.state !== 'play') return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (!game.paused) game.paddle.x = pointerToGame(e);
+  launch();
+});
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+  if (game.state === 'play') {
+    if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); Sound.init(); launch(); }
+    if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') game.paused = !game.paused;
+    if (e.key.startsWith('Arrow')) e.preventDefault();
+  }
+});
+
+window.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+});
+
+window.addEventListener('blur', () => { keys.left = keys.right = false; });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && game.state === 'play') game.paused = true;
+});
+
+$('#soundBtn').addEventListener('click', e => {
+  Sound.on = !Sound.on;
+  Sound.init();
+  e.currentTarget.textContent = Sound.on ? '🔊' : '🔇';
+  e.currentTarget.blur();
+});
+$('#soundBtn').textContent = Sound.on ? '🔊' : '🔇';
+
+/* =====================================================================
+   Fit the game to the screen
+   ===================================================================== */
+function fit() {
+  const gameEl = $('#game');
+  const hud = $('#hud');
+  for (let k = 0; k < 2; k++) {
+    const maxW = window.innerWidth - 16;
+    const maxH = window.innerHeight - hud.offsetHeight - 16;
+    gameEl.style.width = Math.max(260, Math.min(maxW, maxH * W / H, 1100)) + 'px';
+  }
+  document.documentElement.style.setProperty('--hud-bottom', hud.getBoundingClientRect().bottom + 'px');
+}
+window.addEventListener('resize', fit);
+
+/* =====================================================================
+   Main loop
+   ===================================================================== */
+let last = performance.now();
+function frame(now) {
+  let dt = (now - last) / 1000;
+  last = now;
+  if (dt > 0.05) dt = 0.05;
+  if (!game.paused) update(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+
+buildBricks(0);
+resetBalls(1);
+updateHUD();
+fit();
+showTitle();
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
