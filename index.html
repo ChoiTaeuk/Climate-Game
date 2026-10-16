@@ -237,6 +237,21 @@
     border-radius: 6px;
     font-size: 14px;
   }
+  .item-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin: -4px 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .item-legend span {
+    background: #1d6fa8;
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+  .item-legend span.g { background: #1c8a60; }
   .stats {
     display: flex;
     justify-content: center;
@@ -321,6 +336,23 @@ const CONFIG = {
   NEWS_HEATWAVE_SPEEDUP: 0.15,  // 0.15 = ball 15% faster
   NEWS_DELAY_INCREASE: 0.20,    // 0.20 = upgrades 20% more expensive
 
+  // ---- Falling items (catch one to BUY it, move away to skip it) ----
+  ITEM_DROP_CHANCE: 0.16,       // Chance that a broken brick drops an item
+  ITEM_FALL_SPEED: 130,         // How fast items fall (pixels per second)
+  MAX_ITEMS_ON_SCREEN: 3,       // Most items falling at the same time
+  MAX_BALLS: 40,                // Most balls allowed on screen
+  ITEM_DOUBLE_PRICE: 30,        // ×2 Double Balls: every ball splits into two
+  ITEM_PLUS5_PRICE: 40,         // +5 Balls: five new balls fly out of the paddle
+  ITEM_PLUS5_COUNT: 5,
+  ITEM_BIG_PRICE: 20,           // 📏 Big Paddle: paddle is bigger for a short time
+  ITEM_BIG_BONUS: 0.5,          // 0.5 = 50% wider
+  ITEM_BIG_TIME: 10,            // seconds
+  ITEM_NET_PRICE: 35,           // 🛡️ Safety Net: balls bounce off the bottom for a short time
+  ITEM_NET_TIME: 12,            // seconds
+  ITEM_TREES_PRICE: 40,         // 🌳 Plant Trees: Planet Health goes up
+  ITEM_TREES_PLANET: 5,
+  ITEM_FILTER_PRICE: 50,        // 💨 Air Filter: pushes the carbon cloud back up one row
+
   // ---- Ending ----
   ENDING_MONEY_GOAL: 300,       // "Rich" if final money is at least this
   ENDING_PLANET_GOAL: 70,       // "Green" if final Planet Health is at least this
@@ -345,6 +377,7 @@ const SIDE = 24;               // space at left/right of the brick wall
 const CLOUD_START = 34;        // where the bottom of the carbon cloud starts
 const GRID_GAP = 46;           // space between cloud and first brick row
 const PADDLE_Y = 556;          // top of the paddle
+const NET_Y = 592;             // where the Safety Net item sits
 const DPR = Math.min(2, window.devicePixelRatio || 1);
 
 const STAGES = [
@@ -387,6 +420,16 @@ const NEWS_CARDS = [
   { id: 'delay', type: 'shop', icon: '📦', title: 'Supply Chain Delay!',
     effect: () => `All upgrades are ${pct(CONFIG.NEWS_DELAY_INCREASE)} more expensive in the next shop.`,
     idea: 'When shipping is slow, things are harder to get and cost more.' }
+];
+
+// Items that fall from broken bricks. weight = how often it appears compared to the others.
+const ITEMS = [
+  { id: 'double', label: '×2', ball: true, name: 'Double Balls', kind: 'power', weight: 3, price: () => CONFIG.ITEM_DOUBLE_PRICE },
+  { id: 'plus5',  label: '+5', ball: true, name: '+5 Balls',     kind: 'power', weight: 2, price: () => CONFIG.ITEM_PLUS5_PRICE },
+  { id: 'big',    label: '📏', name: 'Big Paddle',   kind: 'power', weight: 3, price: () => CONFIG.ITEM_BIG_PRICE },
+  { id: 'net',    label: '🛡️', name: 'Safety Net',   kind: 'power', weight: 2, price: () => CONFIG.ITEM_NET_PRICE },
+  { id: 'trees',  label: '🌳', name: 'Plant Trees',  kind: 'green', weight: 3, price: () => CONFIG.ITEM_TREES_PRICE },
+  { id: 'filter', label: '💨', name: 'Air Filter',   kind: 'green', weight: 2, price: () => CONFIG.ITEM_FILTER_PRICE }
 ];
 
 const ENDINGS = {
@@ -482,6 +525,8 @@ const Sound = {
   hit()    { this.tone(180, 0.07, 'square', 0.05, 120); },
   brick()  { this.tone(rand(520, 700), 0.1, 'triangle', 0.08, 1100); },
   coin()   { this.tone(988, 0.08, 'square', 0.04); this.tone(1319, 0.14, 'square', 0.04, 0, 0.07); },
+  powerup(){ [660, 880, 1175].forEach((f, i) => this.tone(f, 0.1, 'triangle', 0.07, 0, i * 0.05)); this.coin(); },
+  buzz()   { this.tone(140, 0.18, 'square', 0.05, 110); },
   lose()   { this.tone(330, 0.4, 'sawtooth', 0.06, 90); },
   clear()  { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.18, 'triangle', 0.08, 0, i * 0.1)); },
   over()   { [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.28, 'sawtooth', 0.05, 0, i * 0.18)); }
@@ -759,6 +804,10 @@ const game = {
   paddle: { x: W / 2, w: CONFIG.PADDLE_WIDTH, squash: 0 },
   particles: [],
   floats: [],
+  items: [],           // falling items
+  bigT: 0,             // seconds left of Big Paddle
+  netT: 0,             // seconds left of Safety Net
+  itemSpent: 0,        // money spent on items this game
   banner: null,
   cloudTimer: CONFIG.CLOUD_INTERVAL,
   cloudOffset: 0,      // how far the cloud has moved (target)
@@ -786,6 +835,12 @@ function ballSpeed() {
   let s = CONFIG.BALL_SPEED * (1 + CONFIG.BALL_SPEED_STAGE_BONUS * game.stageIndex);
   if (game.stageNews && game.stageNews.id === 'heatwave') s *= 1 + CONFIG.NEWS_HEATWAVE_SPEEDUP;
   return s;
+}
+
+function paddleTargetWidth() {
+  return CONFIG.PADDLE_WIDTH
+    * (game.upgrades.solar ? 1 + CONFIG.SOLAR_PADDLE_BONUS : 1)
+    * (game.bigT > 0 ? 1 + CONFIG.ITEM_BIG_BONUS : 1);
 }
 
 function moneyMultiplier() {
@@ -837,6 +892,7 @@ function newGame() {
   game.stageNews = null;
   game.shopNews = null;
   game.lastNewsId = null;
+  game.itemSpent = 0;
   startStage(0);
 }
 
@@ -846,12 +902,15 @@ function startStage(i) {
   game.cloudOffset = 0;
   game.cloudShown = 0;
   game.cloudTimer = cloudInterval();
-  game.paddle.w = CONFIG.PADDLE_WIDTH * (game.upgrades.solar ? 1 + CONFIG.SOLAR_PADDLE_BONUS : 1);
+  game.bigT = 0;
+  game.netT = 0;
+  game.paddle.w = paddleTargetWidth();
   game.paddle.x = W / 2;
   buildBricks(i);
   resetBalls(1 + (game.upgrades.fleet ? CONFIG.FLEET_EXTRA_BALLS : 0));
   game.particles = [];
   game.floats = [];
+  game.items = [];
   game.banner = null;
   game.introT = CONFIG.CITY_NAME_TIME;
   game.paused = false;
@@ -937,8 +996,91 @@ function hitBrick(br, idx) {
       color: ['#7dffb3', '#3ee6a8', '#b8ff6b', '#ffffff'][i % 4], kind: 'spark', g: 380, rot: rand(0, 6), vr: rand(-10, 10)
     });
   }
+  if (Math.random() < CONFIG.ITEM_DROP_CHANCE && game.items.length < CONFIG.MAX_ITEMS_ON_SCREEN) dropItem(cx, cy);
   Sound.brick();
   updateHUD();
+}
+
+/* ---------- Falling items: catch = buy, dodge = skip ---------- */
+function dropItem(x, y) {
+  const total = ITEMS.reduce((s, it) => s + it.weight, 0);
+  let r = Math.random() * total;
+  const type = ITEMS.find(it => (r -= it.weight) < 0) || ITEMS[0];
+  game.items.push({ type, x, y, t: 0 });
+}
+
+function updateItems(dt) {
+  const p = game.paddle;
+  game.items.forEach(it => {
+    it.t += dt;
+    it.y += CONFIG.ITEM_FALL_SPEED * dt;
+    const caught = it.y + 13 >= PADDLE_Y && it.y - 13 <= PADDLE_Y + CONFIG.PADDLE_HEIGHT &&
+                   it.x + 30 >= p.x - p.w / 2 && it.x - 30 <= p.x + p.w / 2;
+    if (caught) { it.done = true; buyItem(it); }
+    if (it.y - 20 > H) it.done = true;
+  });
+  game.items = game.items.filter(it => !it.done);
+}
+
+function buyItem(it) {
+  const type = it.type;
+  const price = type.price();
+  if (game.money < price) {
+    addFloat(it.x, PADDLE_Y - 30, `Need $${price}!`, '#c9c4e0', 20);
+    Sound.buzz();
+    return;
+  }
+  game.money -= price;
+  game.itemSpent += price;
+  addFloat(it.x, PADDLE_Y - 30, `-$${price} ${type.name}!`, type.kind === 'green' ? '#7dffb3' : '#7fdcff', 22);
+  for (let i = 0; i < 14; i++) {
+    const a = rand(Math.PI, Math.PI * 2);
+    game.particles.push({
+      x: it.x, y: PADDLE_Y, vx: Math.cos(a) * rand(60, 200), vy: Math.sin(a) * rand(60, 200),
+      life: 0.6, max: 0.6, size: rand(3, 5), grow: 0, kind: 'spark', g: 300, rot: 0, vr: rand(-8, 8),
+      color: type.kind === 'green' ? '#7dffb3' : '#7fdcff'
+    });
+  }
+  Sound.powerup();
+  applyItem(type.id);
+  updateHUD();
+}
+
+function addFlyingBall(x, y, angle) {
+  if (game.balls.length >= CONFIG.MAX_BALLS) return;
+  const sp = ballSpeed();
+  game.balls.push({ x, y, vx: sp * Math.sin(angle), vy: -sp * Math.cos(angle), stuck: false, offset: 0, trail: [] });
+}
+
+function applyItem(id) {
+  const p = game.paddle;
+  if (id === 'double') {
+    if (!game.balls.some(b => !b.stuck)) launch();
+    game.balls.filter(b => !b.stuck).forEach(b => {
+      const a = Math.atan2(b.vx, -b.vy);
+      addFlyingBall(b.x, b.y, a + (Math.abs(a) < 0.2 ? 0.5 : -2 * a));
+    });
+  } else if (id === 'plus5') {
+    const n = CONFIG.ITEM_PLUS5_COUNT;
+    for (let k = 0; k < n; k++) {
+      addFlyingBall(p.x, PADDLE_Y - CONFIG.BALL_RADIUS - 2, n > 1 ? -0.7 + 1.4 * k / (n - 1) : 0);
+    }
+  } else if (id === 'big') {
+    game.bigT = CONFIG.ITEM_BIG_TIME;
+  } else if (id === 'net') {
+    game.netT = CONFIG.ITEM_NET_TIME;
+  } else if (id === 'trees') {
+    game.planet = Math.min(100, game.planet + CONFIG.ITEM_TREES_PLANET);
+    addFloat(W / 2, 200, `+${CONFIG.ITEM_TREES_PLANET} 🌍 Planet`, '#7dffb3', 26);
+  } else if (id === 'filter') {
+    if (game.cloudOffset > 0) {
+      game.cloudOffset -= ROW;
+      game.banner = { text: 'Carbon cloud pushed back!', color: '#7dffb3', t: 0, dur: 1.4 };
+    } else {
+      game.banner = { text: 'Cloud timer reset!', color: '#7dffb3', t: 0, dur: 1.4 };
+    }
+    game.cloudTimer = cloudInterval();
+  }
 }
 
 function loseLife() {
@@ -1028,6 +1170,11 @@ function update(dt) {
   const p = game.paddle;
   if (keys.left) p.x -= CONFIG.PADDLE_KEY_SPEED * dt;
   if (keys.right) p.x += CONFIG.PADDLE_KEY_SPEED * dt;
+  if (game.introT <= 0) {
+    game.bigT = Math.max(0, game.bigT - dt);
+    game.netT = Math.max(0, game.netT - dt);
+  }
+  p.w += (paddleTargetWidth() - p.w) * Math.min(1, dt * 10);
   p.x = clamp(p.x, p.w / 2, W - p.w / 2);
 
   if (game.introT > 0) game.introT -= dt;
@@ -1056,6 +1203,7 @@ function update(dt) {
     }
   });
   game.balls = game.balls.filter(b => !b.dead);
+  updateItems(dt);
 
   if (game.bricks.length === 0) { stageClear(); return; }
   if (game.balls.length === 0) loseLife();
@@ -1111,6 +1259,9 @@ function moveBall(b, dt) {
       break;
     }
 
+    // Safety Net item
+    if (game.netT > 0 && b.vy > 0 && b.y + r >= NET_Y) { b.y = NET_Y - r; b.vy = -Math.abs(b.vy); Sound.wall(); }
+
     if (b.y - r > H) { b.dead = true; return; }
   }
   // never let the ball get stuck going almost sideways
@@ -1147,11 +1298,14 @@ function render() {
   drawDangerLine(g);
   game.bricks.forEach(b => drawBrick(g, b));
   drawCloud(g);
+  drawNet(g);
+  game.items.forEach(it => drawItem(g, it));
   drawPaddle(g);
   if (game.state !== 'title') game.balls.forEach(b => drawBall(g, b));
   drawParticles(g);
   drawFloats(g);
   drawCloudTimer(g);
+  drawItemTimers(g);
   drawMessages(g);
   g.restore();
 }
@@ -1302,6 +1456,77 @@ function drawCloudTimer(g) {
   g.textBaseline = 'middle';
   g.fillStyle = '#fff';
   g.fillText(paused ? '☁️ Cloud waits…' : `☁️ Cloud moves in ${Math.ceil(left)}s`, x + w / 2, y + h / 2 + 1);
+}
+
+function drawItem(g, it) {
+  const type = it.type;
+  const green = type.kind === 'green';
+  const afford = game.money >= type.price();
+  const w = 60, h = 26;
+  const x = it.x - w / 2, y = it.y - h / 2;
+  const pulse = 0.5 + 0.5 * Math.sin(it.t * 8);
+  g.save();
+  g.shadowColor = green ? '#3ee6a8' : '#4cc9f0';
+  g.shadowBlur = 10 + pulse * 10;
+  const gr = g.createLinearGradient(0, y, 0, y + h);
+  gr.addColorStop(0, green ? '#8dffc9' : '#9be7ff');
+  gr.addColorStop(1, green ? '#1fae78' : '#1d8fd6');
+  g.fillStyle = gr;
+  rr(g, x, y, w, h, h / 2);
+  g.fill();
+  g.restore();
+  g.strokeStyle = 'rgba(255,255,255,0.85)';
+  g.lineWidth = 2;
+  rr(g, x, y, w, h, h / 2);
+  g.stroke();
+  if (type.ball) {
+    g.fillStyle = '#ffd84d';
+    circle(g, it.x - 13, it.y, 6);
+    outlinedText(g, type.label, it.x + 9, it.y + 1, 17, '#ffffff');
+  } else {
+    g.font = '18px system-ui, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(type.label, it.x, it.y + 1);
+  }
+  outlinedText(g, `$${type.price()} ${type.name}`, it.x, y + h + 11, 12, afford ? '#ffd166' : '#ff8a8a', 800);
+}
+
+function drawNet(g) {
+  if (game.netT <= 0 || game.state === 'title') return;
+  const blink = game.netT < 3 && Math.sin(game.time * 18) < 0;
+  g.save();
+  g.strokeStyle = blink ? 'rgba(125,255,179,0.3)' : 'rgba(125,255,179,0.95)';
+  g.shadowColor = '#3ee6a8';
+  g.shadowBlur = 12;
+  g.lineWidth = 4;
+  g.beginPath();
+  g.moveTo(0, NET_Y);
+  g.lineTo(W, NET_Y);
+  g.stroke();
+  g.restore();
+}
+
+function drawItemTimers(g) {
+  if (game.state !== 'play') return;
+  const list = [];
+  if (game.bigT > 0) list.push(`📏 ${Math.ceil(game.bigT)}s`);
+  if (game.netT > 0) list.push(`🛡️ ${Math.ceil(game.netT)}s`);
+  const flying = game.balls.filter(b => !b.stuck).length;
+  if (flying > 1) list.push(`🟡 ×${flying}`);
+  let x = 8;
+  list.forEach(text => {
+    g.font = '800 12px system-ui, sans-serif';
+    const w = g.measureText(text).width + 18;
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    rr(g, x, 6, w, 22, 11);
+    g.fill();
+    g.fillStyle = '#fff';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(text, x + w / 2, 18);
+    x += w + 6;
+  });
 }
 
 function drawPaddle(g) {
@@ -1496,7 +1721,12 @@ function showTitle() {
         🖱️ <b>Move:</b> mouse, touch drag, or ← → keys<br>
         🚀 <b>Launch:</b> click, tap, or Space<br>
         ☁️ Every ${CONFIG.CLOUD_INTERVAL} seconds, the carbon cloud pushes the bricks down.<br>
-        🌍 Each push hurts Planet Health. Don't let the bricks reach you!
+        🌍 Each push hurts Planet Health. Don't let the bricks reach you!<br>
+        🎁 Bricks can drop items. <b>Catch</b> an item to buy it with your money, or <b>move away</b> to skip it.
+      </div>
+      <div class="item-legend">
+        <span>🟡×2 Double Balls</span><span>🟡+5 Balls</span><span>📏 Big Paddle</span>
+        <span>🛡️ Safety Net</span><span class="g">🌳 Plant Trees</span><span class="g">💨 Air Filter</span>
       </div>
       <button class="btn" data-action="start">▶ Start</button>
       <p class="note">Numbers in this game are simplified for learning.</p>
@@ -1624,6 +1854,7 @@ function showEnding() {
       <div class="stats">
         <div class="stat"><div class="label">💰 Final Money</div><div class="value gold">$${game.money}</div></div>
         <div class="stat"><div class="label">🌍 Planet Health</div><div class="value ${green ? 'green' : 'red'}">${game.planet}</div></div>
+        <div class="stat"><div class="label">🎁 Spent on items</div><div class="value">$${game.itemSpent}</div></div>
       </div>
       <p>${e.text}</p>
       <p class="muted">Green upgrades: ${owned.length ? owned.map(u => u.icon + ' ' + u.name).join(', ') : 'none'}</p>
